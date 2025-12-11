@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>איפוס נשק — צמ"מ 8109</title>
 
-  <!-- כל ה-CSS כאן, אין קובץ חיצוני -->
   <style>
     :root {
       --bg: #020617;
@@ -19,10 +18,7 @@
       --danger: #ef4444;
     }
 
-    *,
-    *::before,
-    *::after { box-sizing: border-box; }
-
+    *, *::before, *::after { box-sizing: border-box; }
     html, body { height: 100%; }
 
     body {
@@ -69,9 +65,10 @@
 
     .grid { display: grid; gap: 10px; }
     .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
     @media (max-width: 800px) {
-      .g3 { grid-template-columns: 1fr; }
+      .g3, .g2 { grid-template-columns: 1fr; }
     }
 
     label {
@@ -84,6 +81,7 @@
     .full { display: block; margin-top: 10px; }
 
     input[type="number"],
+    input[type="text"],
     select,
     input[type="file"] {
       background: #020617;
@@ -206,17 +204,17 @@
   </header>
 
   <main>
-    <!-- פרטי מסגרת -->
+    <!-- פרטי מסגרת + פרטי מאפס -->
     <section class="panel">
-      <h2>פרטי מסגרת</h2>
+      <h2>פרטי מסגרת ומאפס</h2>
       <div class="grid g3">
         <label>
           פלוגה
           <select id="unitCompany">
             <option value="">—</option>
-            <option value="A">א'</option>
-            <option value="B">ב'</option>
-            <option value="C">ג'</option>
+            <option value="א">א'</option>
+            <option value="ב">ב'</option>
+            <option value="ג">ג'</option>
           </select>
         </label>
 
@@ -231,40 +229,62 @@
         </label>
 
         <label>
-          סוג נשק
-          <select id="weaponType">
-            <option value="">ללא בחירה (ידני)</option>
-            <option value="M16-iron">M16 — כוונות ברזל</option>
-            <option value="M16-optic">M16 — כוונת אופטית</option>
-            <option value="M16-trijicon">M16 — Trijicon</option>
-            <option value="M4-iron">M4 — כוונות ברזל</option>
-            <option value="M4-optic">M4 — כוונת אופטית</option>
-            <option value="M4-trijicon">M4 — Trijicon</option>
-            <option value="Tavor">תבור</option>
-          </select>
+          שם המאפס / היורה
+          <input type="text" id="shooterName" placeholder="שם מלא">
         </label>
       </div>
     </section>
 
+    <!-- בחירת נשק ואמצעי -->
+    <section class="panel">
+      <h2>נשק ואמצעי כוונת</h2>
+      <div class="grid g2">
+        <label>
+          סוג נשק
+          <select id="weaponType">
+            <option value="">בחירת נשק ידנית</option>
+            <option value="M16">M16</option>
+            <option value="M4">M4</option>
+            <option value="Tavor">תבור</option>
+          </select>
+        </label>
+
+        <label>
+          אמצעי / סוג כוונת
+          <select id="opticType">
+            <option value="">ללא (ערכים ידניים)</option>
+            <option value="iron">כוונות ברזל</option>
+            <option value="optic">כוונת אופטית</option>
+            <option value="trijicon">Trijicon / ACOG</option>
+          </select>
+        </label>
+      </div>
+
+      <p class="note">
+        בחירת נשק ואמצעי תמשוך אוטומטית את היחס מ־<code>weapons.json</code> (אותו אתה עורך כאדמין).
+        תמיד ניתן לשנות ידנית למטה.
+      </p>
+    </section>
+
     <!-- יחס קובייה / קליקים -->
     <section class="panel">
-      <h2>יחס קובייה–קליקים</h2>
+      <h2>הגדרת קליקים לנשק הנבחר</h2>
       <div class="grid g3">
         <label>
           גודל קובייה בדף (בס"מ)
           <input type="number" id="gridSizeCm" value="1" step="0.1" min="0.1">
         </label>
         <label>
-          קליקים בגובה עבור קובייה אחת
+          קליקים בגובה לקובייה אחת
           <input type="number" id="elevClicksPerSquare" value="0" step="0.1" min="0">
         </label>
         <label>
-          קליקים בצידוד עבור קובייה אחת
+          קליקים בצידוד לקובייה אחת
           <input type="number" id="windClicksPerSquare" value="0" step="0.1" min="0">
         </label>
       </div>
       <p class="note">
-        אפשר לבחור נשק מהרשימה כדי למשוך אוטומטית את היחסים (אם תגדיר אותם למעלה בקוד), או להזין ידנית.
+        אתה כמאפס יכול לערוך כאן ידנית לכל ירי. שינוי הקבועים לכל נשק/אמצעי נעשה בקובץ <code>weapons.json</code> בגיטהאב.
       </p>
       <div class="actions">
         <button id="btnConfirmRatios" class="primary">אישור יחס קובייה-קליקים</button>
@@ -294,13 +314,13 @@
         <button id="btnClearHits" class="ghost">ניקוי פגיעות</button>
       </div>
       <p class="hint">
-        סדר פעולות מומלץ: 1️⃣ לבחור נקודת פגיעה רצויה 2️⃣ למדוד 1 ס"מ על הדף 3️⃣ לסמן את כל הפגיעות.
+        סדר פעולות מומלץ: 1️⃣ נקודת פגיעה רצויה 2️⃣ מדידת 1 ס"מ 3️⃣ סימון כל הפגיעות.
       </p>
     </section>
 
     <!-- חישוב תוצאה ותעודה -->
     <section class="panel">
-      <h2>חישוב תיקון ותעודת איפוס</h2>
+      <h2>חישוב תיקון, גודל מקבץ ותעודת איפוס</h2>
       <div class="actions">
         <button id="btnCompute" class="primary">חשב תיקון כוונת</button>
         <p id="resultText" class="result"></p>
@@ -327,17 +347,9 @@
     <small>© 2025 — נבנה ל-GitHub Pages. ללא ספריות חיצוניות. עובד ב-Chrome/Safari/Edge.</small>
   </footer>
 
-  <!-- כל ה-JS כאן, אין app.js נפרד -->
   <script>
-    const WEAPON_RATIOS = {
-      'M16-iron': null,
-      'M16-optic': null,
-      'M16-trijicon': null,
-      'M4-iron': null,
-      'M4-optic': null,
-      'M4-trijicon': null,
-      'Tavor': null
-    };
+    // ===== הגדרות ו-state =====
+    let WEAPON_RATIOS = {}; // נטען מ-weapons.json
 
     const state = {
       mode: 'desired',
@@ -357,7 +369,9 @@
     const el = {
       unitCompany: document.getElementById('unitCompany'),
       unitPlatoon: document.getElementById('unitPlatoon'),
+      shooterName: document.getElementById('shooterName'),
       weaponType: document.getElementById('weaponType'),
+      opticType: document.getElementById('opticType'),
       gridSizeCm: document.getElementById('gridSizeCm'),
       elevClicksPerSquare: document.getElementById('elevClicksPerSquare'),
       windClicksPerSquare: document.getElementById('windClicksPerSquare'),
@@ -380,6 +394,20 @@
     const ctx = el.canvas.getContext('2d');
     const certCtx = el.certCanvas.getContext('2d');
 
+    // ===== טעינת weapons.json =====
+    async function loadWeaponRatios() {
+      try {
+        const res = await fetch('weapons.json', { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        WEAPON_RATIOS = await res.json();
+        console.log('weapons.json loaded', WEAPON_RATIOS);
+      } catch (err) {
+        console.warn('לא הצלחתי לטעון weapons.json, ממשיכים עם ערכים ידניים בלבד', err);
+        WEAPON_RATIOS = {};
+      }
+    }
+
+    // ===== פונקציות עזר =====
     function setMode(mode) {
       state.mode = mode;
       let label = 'מצב: ';
@@ -413,21 +441,28 @@
       return cm / state.config.gridSizeCm;
     }
 
-    function updateRatiosFromWeapon() {
-      const key = el.weaponType.value;
-      const ratio = WEAPON_RATIOS[key];
-      if (!ratio) return;
-      el.elevClicksPerSquare.value = ratio.elevClicksPerSquare;
-      el.windClicksPerSquare.value = ratio.windClicksPerSquare;
-      applyRatiosFromInputs();
-    }
-
     function applyRatiosFromInputs() {
       state.config.gridSizeCm = parseFloat(el.gridSizeCm.value) || 1;
       state.config.elevClicksPerSquare = parseFloat(el.elevClicksPerSquare.value) || 0;
       state.config.windClicksPerSquare = parseFloat(el.windClicksPerSquare.value) || 0;
     }
 
+    function updateRatiosFromWeapon() {
+      const weapon = el.weaponType.value;
+      const optic = el.opticType.value;
+      if (!weapon || !optic) return;
+
+      const weaponCfg = WEAPON_RATIOS[weapon];
+      if (!weaponCfg) return;
+      const opticCfg = weaponCfg[optic];
+      if (!opticCfg) return;
+
+      el.elevClicksPerSquare.value = opticCfg.elevClicksPerSquare ?? 0;
+      el.windClicksPerSquare.value = opticCfg.windClicksPerSquare ?? 0;
+      applyRatiosFromInputs();
+    }
+
+    // ===== ציור =====
     function clearCanvas() {
       ctx.clearRect(0, 0, el.canvas.width, el.canvas.height);
     }
@@ -500,7 +535,9 @@
       ctx.fillText(text, x, y);
     }
 
+    // ===== אירועים =====
     el.weaponType.addEventListener('change', updateRatiosFromWeapon);
+    el.opticType.addEventListener('change', updateRatiosFromWeapon);
 
     el.btnConfirmRatios.addEventListener('click', () => {
       applyRatiosFromInputs();
@@ -544,11 +581,17 @@
       draw();
     });
 
-    el.canvas.addEventListener('click', (ev) => {
+    // קליק / טאץ' מדויק על הקנבס
+    el.canvas.addEventListener('click', handleCanvasClick);
+
+    function handleCanvasClick(ev) {
       if (!state.image) return;
       const rect = el.canvas.getBoundingClientRect();
-      const x = ev.clientX - rect.left;
-      const y = ev.clientY - rect.top;
+      // התאמה לסקייל בין גודל הקנבס הפנימי לגודל על המסך
+      const scaleX = el.canvas.width / rect.width;
+      const scaleY = el.canvas.height / rect.height;
+      const x = (ev.clientX - rect.left) * scaleX;
+      const y = (ev.clientY - rect.top) * scaleY;
 
       if (state.mode === 'desired') {
         state.desiredHit = { x, y };
@@ -559,15 +602,16 @@
         }
         if (state.ruler.length === 2) {
           const dpx = dist(state.ruler[0], state.ruler[1]);
-          state.pixelsPerCm = dpx;
+          state.pixelsPerCm = dpx; // שתי הנקודות = 1 ס"מ
         }
       } else if (state.mode === 'hits') {
         state.hits.push({ x, y });
       }
 
       draw();
-    });
+    }
 
+    // חישוב תיקון + גודל מקבץ
     el.btnCompute.addEventListener('click', () => {
       if (!state.desiredHit) {
         alert('יש לסמן נקודת פגיעה רצויה.');
@@ -600,13 +644,34 @@
       const horizDir = dxCm > 0 ? 'ימינה' : dxCm < 0 ? 'שמאלה' : '—';
       const vertDir = dyCm > 0 ? 'מטה' : dyCm < 0 ? 'מעלה' : '—';
 
-      state.result = { dxCm, dyCm, elevClicks, windClicks, horizDir, vertDir };
+      // גודל מקבץ: המרחק הכי גדול בין שתי פגיעות
+      let maxDistPx = 0;
+      for (let i = 0; i < state.hits.length; i++) {
+        for (let j = i + 1; j < state.hits.length; j++) {
+          const d = dist(state.hits[i], state.hits[j]);
+          if (d > maxDistPx) maxDistPx = d;
+        }
+      }
+      const groupSizeCm = maxDistPx ? pxToCm(maxDistPx) : 0;
+      const groupSizeSquares = groupSizeCm ? cmToSquares(groupSizeCm) : 0;
+
+      state.result = {
+        dxCm, dyCm,
+        elevClicks, windClicks,
+        horizDir, vertDir,
+        groupSizeCm, groupSizeSquares
+      };
+
+      const groupText = groupSizeCm
+        ? ` | גודל מקבץ ≈ ${groupSizeCm.toFixed(1)} ס"מ (${groupSizeSquares.toFixed(1)} קוביות)`
+        : '';
 
       el.resultText.textContent =
         `תיקון: צידוד ${windClicks} קליקים ${horizDir} | ` +
-        `גובה ${elevClicks} קליקים ${vertDir}`;
+        `גובה ${elevClicks} קליקים ${vertDir}` + groupText;
     });
 
+    // ===== תעודת איפוס =====
     function drawCertificate() {
       const c = el.certCanvas;
       const ctx2 = certCtx;
@@ -628,17 +693,26 @@
       const ts = new Date().toLocaleString('he-IL');
       ctx2.fillText(`תאריך/שעה: ${ts}`, 60, 120);
       ctx2.fillText(`פלוגה: ${el.unitCompany.value || '—'} | מחלקה: ${el.unitPlatoon.value || '—'}`, 60, 150);
+      ctx2.fillText(`שם המאפס/היורה: ${el.shooterName.value || '—'}`, 60, 180);
 
       const selectedWeapon = el.weaponType.options[el.weaponType.selectedIndex];
+      const selectedOptic = el.opticType.options[el.opticType.selectedIndex];
       const weaponLabel = selectedWeapon && selectedWeapon.textContent ? selectedWeapon.textContent : '—';
-      ctx2.fillText(`נשק: ${weaponLabel}`, 60, 180);
+      const opticLabel = selectedOptic && selectedOptic.textContent ? selectedOptic.textContent : '—';
+      ctx2.fillText(`נשק: ${weaponLabel} | אמצעי: ${opticLabel}`, 60, 210);
 
       if (state.result) {
-        const { elevClicks, windClicks, horizDir, vertDir } = state.result;
+        const { elevClicks, windClicks, horizDir, vertDir, groupSizeCm, groupSizeSquares } = state.result;
         ctx2.fillText(
-          `תיקון כוונת: צידוד ${windClicks} קליקים ${horizDir}, גובה ${elevClicks} קליקים ${vertDir}`,
-          60, 210
+          `תיקון: צידוד ${windClicks} קליקים ${horizDir}, גובה ${elevClicks} קליקים ${vertDir}`,
+          60, 240
         );
+        if (groupSizeCm) {
+          ctx2.fillText(
+            `גודל מקבץ: ≈ ${groupSizeCm.toFixed(1)} ס"מ (${groupSizeSquares.toFixed(1)} קוביות)`,
+            60, 270
+          );
+        }
       }
 
       if (el.canvas.width && el.canvas.height) {
@@ -676,8 +750,10 @@
       window.open(`https://wa.me/?text=${msg}`, '_blank');
     });
 
+    // אתחול
     applyRatiosFromInputs();
     setMode('desired');
+    loadWeaponRatios();
   </script>
 </body>
 </html>
