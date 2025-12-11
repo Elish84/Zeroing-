@@ -1,58 +1,254 @@
-
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>איפוס נשק — Zeroing</title>
-  ./assets/style.css
+  <title>איפוס נשק — צמ"מ 8109</title>
+
+  <!-- כל ה-CSS כאן, אין קובץ חיצוני -->
+  <style>
+    :root {
+      --bg: #020617;
+      --panel: #020617;
+      --panel-border: #1f2937;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --primary: #22c55e;
+      --primary-dark: #16a34a;
+      --accent: #38bdf8;
+      --danger: #ef4444;
+    }
+
+    *,
+    *::before,
+    *::after { box-sizing: border-box; }
+
+    html, body { height: 100%; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%);
+      color: var(--text);
+      padding: 16px;
+    }
+
+    header {
+      max-width: 1080px;
+      margin: 0 auto 16px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 28px;
+    }
+
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    section.panel {
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 14px;
+      border: 1px solid var(--panel-border);
+      padding: 16px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+    }
+
+    section.panel h2 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+
+    .hint { color: var(--muted); font-size: 13px; }
+    .note { color: var(--muted); font-size: 13px; margin-top: 8px; }
+
+    .grid { display: grid; gap: 10px; }
+    .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    @media (max-width: 800px) {
+      .g3 { grid-template-columns: 1fr; }
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 14px;
+    }
+
+    .full { display: block; margin-top: 10px; }
+
+    input[type="number"],
+    select,
+    input[type="file"] {
+      background: #020617;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      padding: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    input[type="file"] {
+      padding-inline-start: 0;
+    }
+
+    input:focus,
+    select:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    button {
+      border-radius: 10px;
+      border: 1px solid #4b5563;
+      background: #020617;
+      color: var(--text);
+      padding: 8px 14px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button.primary {
+      background: var(--primary);
+      border-color: var(--primary-dark);
+      color: #052e16;
+      font-weight: 700;
+    }
+
+    button.ghost {
+      background: transparent;
+      border-color: #374151;
+      color: var(--muted);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    a.link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    a.link:hover { text-decoration: underline; }
+
+    .result { font-weight: 700; font-size: 14px; }
+
+    .canvasWrap {
+      margin-top: 12px;
+      border-radius: 12px;
+      border: 1px dashed #374151;
+      padding: 8px;
+      background: #020617;
+    }
+
+    #zeroingCanvas {
+      width: 100%;
+      max-width: 100%;
+      display: block;
+      background: #020617;
+      border-radius: 8px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    #modeLabel { font-size: 13px; color: var(--muted); }
+
+    .cert {
+      width: 100%;
+      max-width: 100%;
+      margin-top: 12px;
+      border-radius: 12px;
+      border: 1px solid #1f2937;
+      background: #020617;
+    }
+
+    footer {
+      max-width: 1080px;
+      margin: 16px auto 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+  </style>
 </head>
 <body>
   <header>
     <h1>איפוס נשק — צמ"מ 8109</h1>
-    <p class="hint">⚠ מומלץ לפתוח ב‑Chrome / Safari. עובד גם ב‑Edge (ללא תוספים חוסמים).</p>
+    <p class="hint">⚠ מומלץ לפתוח ב-Chrome / Safari. עובד גם ב-Edge (ללא תוספים חוסמים).</p>
   </header>
 
   <main>
-    <section class="controls">
-      <h2>הגדרות קליקים לנשק הנבחר</h2>
-      <div class="grid g2">
+    <!-- פרטי מסגרת -->
+    <section class="panel">
+      <h2>פרטי מסגרת</h2>
+      <div class="grid g3">
         <label>
-          שם פלוגה
+          פלוגה
           <select id="unitCompany">
-            <option value="א׳">א׳</option>
-            <option value="ב׳">ב׳</option>
-            <option value="ג׳">ג׳</option>
-            <option value="מסייעת">מסייעת</option>
-            <option value="מפקדה">מפקדה</option>
+            <option value="">—</option>
+            <option value="A">א'</option>
+            <option value="B">ב'</option>
+            <option value="C">ג'</option>
           </select>
         </label>
+
         <label>
           מחלקה
           <select id="unitPlatoon">
-            <option value="מפקדה">מפקדה</option>
+            <option value="">—</option>
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
-            <option value="4">4</option>
+          </select>
+        </label>
+
+        <label>
+          סוג נשק
+          <select id="weaponType">
+            <option value="">ללא בחירה (ידני)</option>
+            <option value="M16-iron">M16 — כוונות ברזל</option>
+            <option value="M16-optic">M16 — כוונת אופטית</option>
+            <option value="M16-trijicon">M16 — Trijicon</option>
+            <option value="M4-iron">M4 — כוונות ברזל</option>
+            <option value="M4-optic">M4 — כוונת אופטית</option>
+            <option value="M4-trijicon">M4 — Trijicon</option>
+            <option value="Tavor">תבור</option>
           </select>
         </label>
       </div>
+    </section>
 
-      <label class="full">
-        סוג נשק
-        <select id="weaponType">
-          <option value="">בחר נשק…</option>
-          <option value="M16-iron">M16 ארוך — כוונות ברזל</option>
-          <option value="M16-optic">M16 ארוך — כוונת אופטית</option>
-          <option value="M16-trijicon">M16 — Trijicon</option>
-          <option value="M4-iron">M4 — כוונות ברזל</option>
-          <option value="M4-optic">M4 — כוונת אופטית</option>
-          <option value="M4-trijicon">M4 — Trijicon</option>
-          <option value="Tavor">תבור</option>
-        </select>
-      </label>
-
+    <!-- יחס קובייה / קליקים -->
+    <section class="panel">
+      <h2>יחס קובייה–קליקים</h2>
       <div class="grid g3">
         <label>
           גודל קובייה בדף (בס"מ)
@@ -67,47 +263,421 @@
           <input type="number" id="windClicksPerSquare" value="0" step="0.1" min="0">
         </label>
       </div>
-      <p class="note">הערה: אם ברצונך חישוב אוטומטי לפי הנשק, עדכן את טבלת היחסים ב‑<code>assets/app.js</code> (ראה הערות בקובץ).</p>
-
+      <p class="note">
+        אפשר לבחור נשק מהרשימה כדי למשוך אוטומטית את היחסים (אם תגדיר אותם למעלה בקוד), או להזין ידנית.
+      </p>
       <div class="actions">
-        <button id="btnConfirmRatios" class="primary">אישור יחס קובייה‑קליקים</button>
+        <button id="btnConfirmRatios" class="primary">אישור יחס קובייה-קליקים</button>
       </div>
     </section>
 
-    <section class="upload">
+    <!-- העלאת דף איפוס -->
+    <section class="panel">
       <h2>צילום / העלאת דף איפוס</h2>
-      <input type="file" id="zeroingImage" accept="image/*">
+      <label class="full">
+        בחר קובץ תמונה (JPG / PNG)
+        <input type="file" id="zeroingImage" accept="image/*">
+      </label>
+      <p class="note">
+        צלם את דף האיפוס מלמעלה, כמה שיותר ישר, ושמור כתמונה במכשיר. לאחר מכן בחר כאן את התמונה.
+      </p>
+
       <div class="canvasWrap">
-        <canvas id="zeroingCanvas" width="800" height="600" aria-label="קנבס איפוס"></canvas>
-        <div class="toolbar">
-          <button id="btnDesiredHit">נקודת פגיעה רצויה</button>
-          <button id="btnRuler">הגדרת סרגל (1 ס"מ)</button>
-          <button id="btnHits">סמן פגיעות</button>
-          <button id="btnClearHits" class="ghost">ניקוי פגיעות</button>
-          <span id="modeLabel">מצב נוכחי: אין</span>
-        </div>
+        <canvas id="zeroingCanvas"></canvas>
       </div>
-      <div class="actions">
-        <button id="btnCompute" class="primary">חשב תיקון</button>
-        <span id="resultText" class="result"></span>
+
+      <div class="toolbar">
+        <span id="modeLabel">מצב: נקודת רצויה</span>
+        <button id="btnDesiredHit">סמן נקודת פגיעה רצויה</button>
+        <button id="btnRuler">מדידת 1 ס"מ (סרגל)</button>
+        <button id="btnHits">סימון פגיעות</button>
+        <button id="btnClearHits" class="ghost">ניקוי פגיעות</button>
       </div>
+      <p class="hint">
+        סדר פעולות מומלץ: 1️⃣ לבחור נקודת פגיעה רצויה 2️⃣ למדוד 1 ס"מ על הדף 3️⃣ לסמן את כל הפגיעות.
+      </p>
     </section>
 
-    <section class="certificate">
-      <h2>תעודת איפוס</h2>
+    <!-- חישוב תוצאה ותעודה -->
+    <section class="panel">
+      <h2>חישוב תיקון ותעודת איפוס</h2>
+      <div class="actions">
+        <button id="btnCompute" class="primary">חשב תיקון כוונת</button>
+        <p id="resultText" class="result"></p>
+      </div>
+
+      <hr>
+
       <div class="actions">
         <button id="btnMakeCert">צור תעודת איפוס</button>
         <button id="btnOpenWhatsApp" class="ghost">פתח WhatsApp לשליחת התעודה</button>
-        <a id="btnDownloadCert" class="link" download="zeroing_certificate.png">הורד תעודת איפוס כתמונה</a>
+        <a id="btnDownloadCert" class="link" download="zeroing_certificate.png">
+          הורד תעודת איפוס כתמונה
+        </a>
       </div>
+
       <canvas id="certCanvas" width="1024" height="768" class="cert"></canvas>
-      <p class="hint">לאחר הורדת התמונה ניתן לשתף אותה דרך WhatsApp (שיתוף → WhatsApp + בחירת התמונה מהגלריה).</p>
+      <p class="hint">
+        לאחר הורדת התמונה ניתן לשתף אותה דרך WhatsApp (שיתוף → WhatsApp + בחירת התמונה מהגלריה).
+      </p>
     </section>
   </main>
 
   <footer>
-    <small>© 2025 — נבנה ל‑GitHub Pages. ללא ספריות חיצוניות. עובד ב‑Chrome/Safari/Edge.</small>
+    <small>© 2025 — נבנה ל-GitHub Pages. ללא ספריות חיצוניות. עובד ב-Chrome/Safari/Edge.</small>
   </footer>
 
-  ./assets/app.js</script>
+  <!-- כל ה-JS כאן, אין app.js נפרד -->
+  <script>
+    const WEAPON_RATIOS = {
+      'M16-iron': null,
+      'M16-optic': null,
+      'M16-trijicon': null,
+      'M4-iron': null,
+      'M4-optic': null,
+      'M4-trijicon': null,
+      'Tavor': null
+    };
+
+    const state = {
+      mode: 'desired',
+      image: null,
+      pixelsPerCm: null,
+      desiredHit: null,
+      ruler: [],
+      hits: [],
+      config: {
+        gridSizeCm: 1,
+        elevClicksPerSquare: 0,
+        windClicksPerSquare: 0
+      },
+      result: null
+    };
+
+    const el = {
+      unitCompany: document.getElementById('unitCompany'),
+      unitPlatoon: document.getElementById('unitPlatoon'),
+      weaponType: document.getElementById('weaponType'),
+      gridSizeCm: document.getElementById('gridSizeCm'),
+      elevClicksPerSquare: document.getElementById('elevClicksPerSquare'),
+      windClicksPerSquare: document.getElementById('windClicksPerSquare'),
+      btnConfirmRatios: document.getElementById('btnConfirmRatios'),
+      fileInput: document.getElementById('zeroingImage'),
+      canvas: document.getElementById('zeroingCanvas'),
+      modeLabel: document.getElementById('modeLabel'),
+      btnDesiredHit: document.getElementById('btnDesiredHit'),
+      btnRuler: document.getElementById('btnRuler'),
+      btnHits: document.getElementById('btnHits'),
+      btnClearHits: document.getElementById('btnClearHits'),
+      btnCompute: document.getElementById('btnCompute'),
+      resultText: document.getElementById('resultText'),
+      btnMakeCert: document.getElementById('btnMakeCert'),
+      btnDownloadCert: document.getElementById('btnDownloadCert'),
+      btnOpenWhatsApp: document.getElementById('btnOpenWhatsApp'),
+      certCanvas: document.getElementById('certCanvas')
+    };
+
+    const ctx = el.canvas.getContext('2d');
+    const certCtx = el.certCanvas.getContext('2d');
+
+    function setMode(mode) {
+      state.mode = mode;
+      let label = 'מצב: ';
+      if (mode === 'desired') label += 'נקודת רצויה';
+      else if (mode === 'ruler') label += 'סרגל 1 ס"מ';
+      else if (mode === 'hits') label += 'סימון פגיעות';
+      el.modeLabel.textContent = label;
+      draw();
+    }
+
+    function dist(a, b) {
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+      return Math.hypot(dx, dy);
+    }
+
+    function avg(points) {
+      const n = points.length;
+      if (!n) return null;
+      let sx = 0, sy = 0;
+      points.forEach(p => { sx += p.x; sy += p.y; });
+      return { x: sx / n, y: sy / n };
+    }
+
+    function pxToCm(px) {
+      if (!state.pixelsPerCm) return null;
+      return px / state.pixelsPerCm;
+    }
+
+    function cmToSquares(cm) {
+      return cm / state.config.gridSizeCm;
+    }
+
+    function updateRatiosFromWeapon() {
+      const key = el.weaponType.value;
+      const ratio = WEAPON_RATIOS[key];
+      if (!ratio) return;
+      el.elevClicksPerSquare.value = ratio.elevClicksPerSquare;
+      el.windClicksPerSquare.value = ratio.windClicksPerSquare;
+      applyRatiosFromInputs();
+    }
+
+    function applyRatiosFromInputs() {
+      state.config.gridSizeCm = parseFloat(el.gridSizeCm.value) || 1;
+      state.config.elevClicksPerSquare = parseFloat(el.elevClicksPerSquare.value) || 0;
+      state.config.windClicksPerSquare = parseFloat(el.windClicksPerSquare.value) || 0;
+    }
+
+    function clearCanvas() {
+      ctx.clearRect(0, 0, el.canvas.width, el.canvas.height);
+    }
+
+    function draw() {
+      clearCanvas();
+      if (!state.image) return;
+
+      ctx.drawImage(state.image, 0, 0, el.canvas.width, el.canvas.height);
+
+      if (state.desiredHit) {
+        drawCross(state.desiredHit.x, state.desiredHit.y, '#22c55e');
+        label(state.desiredHit.x + 6, state.desiredHit.y - 8, 'רצוי', '#22c55e');
+      }
+
+      if (state.ruler.length === 2) {
+        const [a, b] = state.ruler;
+        drawLine(a, b, '#38bdf8');
+        drawCircle(a.x, a.y, 5, '#38bdf8');
+        drawCircle(b.x, b.y, 5, '#38bdf8');
+        const d = dist(a, b);
+        label((a.x + b.x) / 2, (a.y + b.y) / 2 - 10,
+          `1 ס"מ (${d.toFixed(1)}px)`, '#38bdf8');
+      } else if (state.ruler.length === 1) {
+        drawCircle(state.ruler[0].x, state.ruler[0].y, 5, '#38bdf8');
+      }
+
+      if (state.hits.length) {
+        state.hits.forEach(p => drawCircle(p.x, p.y, 5, '#ef4444'));
+        const c = avg(state.hits);
+        if (c) {
+          drawCross(c.x, c.y, '#ef4444');
+          label(c.x + 6, c.y - 8, 'מרכז קבוצה', '#ef4444');
+        }
+      }
+    }
+
+    function drawCircle(x, y, r, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    function drawCross(x, y, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x - 8, y);
+      ctx.lineTo(x + 8, y);
+      ctx.moveTo(x, y - 8);
+      ctx.lineTo(x, y + 8);
+      ctx.stroke();
+    }
+
+    function drawLine(a, b, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+
+    function label(x, y, text, color) {
+      ctx.fillStyle = color;
+      ctx.font = 'bold 13px system-ui';
+      ctx.textAlign = 'left';
+      ctx.fillText(text, x, y);
+    }
+
+    el.weaponType.addEventListener('change', updateRatiosFromWeapon);
+
+    el.btnConfirmRatios.addEventListener('click', () => {
+      applyRatiosFromInputs();
+      alert('יחס קובייה-קליקים עודכן.');
+    });
+
+    el.fileInput.addEventListener('change', (ev) => {
+      const file = ev.target.files[0];
+      if (!file) return;
+
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        state.image = img;
+        const maxW = 1600;
+        const maxH = 1200;
+        let w = img.width;
+        let h = img.height;
+        const scale = Math.min(maxW / w, maxH / h, 1);
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
+
+        el.canvas.width = w;
+        el.canvas.height = h;
+
+        draw();
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    });
+
+    el.btnDesiredHit.addEventListener('click', () => setMode('desired'));
+    el.btnRuler.addEventListener('click', () => {
+      state.ruler = [];
+      state.pixelsPerCm = null;
+      setMode('ruler');
+    });
+    el.btnHits.addEventListener('click', () => setMode('hits'));
+    el.btnClearHits.addEventListener('click', () => {
+      state.hits = [];
+      draw();
+    });
+
+    el.canvas.addEventListener('click', (ev) => {
+      if (!state.image) return;
+      const rect = el.canvas.getBoundingClientRect();
+      const x = ev.clientX - rect.left;
+      const y = ev.clientY - rect.top;
+
+      if (state.mode === 'desired') {
+        state.desiredHit = { x, y };
+      } else if (state.mode === 'ruler') {
+        state.ruler.push({ x, y });
+        if (state.ruler.length > 2) {
+          state.ruler = state.ruler.slice(-2);
+        }
+        if (state.ruler.length === 2) {
+          const dpx = dist(state.ruler[0], state.ruler[1]);
+          state.pixelsPerCm = dpx;
+        }
+      } else if (state.mode === 'hits') {
+        state.hits.push({ x, y });
+      }
+
+      draw();
+    });
+
+    el.btnCompute.addEventListener('click', () => {
+      if (!state.desiredHit) {
+        alert('יש לסמן נקודת פגיעה רצויה.');
+        return;
+      }
+      if (state.hits.length === 0) {
+        alert('יש לסמן לפחות פגיעה אחת.');
+        return;
+      }
+      if (!state.pixelsPerCm) {
+        alert('יש למדוד 1 ס"מ על הדף (סרגל) לפני החישוב.');
+        return;
+      }
+
+      applyRatiosFromInputs();
+
+      const center = avg(state.hits);
+      const dxPx = center.x - state.desiredHit.x;
+      const dyPx = center.y - state.desiredHit.y;
+
+      const dxCm = pxToCm(dxPx);
+      const dyCm = pxToCm(dyPx);
+
+      const dxSquares = cmToSquares(Math.abs(dxCm));
+      const dySquares = cmToSquares(Math.abs(dyCm));
+
+      const elevClicks = Math.round(dySquares * state.config.elevClicksPerSquare);
+      const windClicks = Math.round(dxSquares * state.config.windClicksPerSquare);
+
+      const horizDir = dxCm > 0 ? 'ימינה' : dxCm < 0 ? 'שמאלה' : '—';
+      const vertDir = dyCm > 0 ? 'מטה' : dyCm < 0 ? 'מעלה' : '—';
+
+      state.result = { dxCm, dyCm, elevClicks, windClicks, horizDir, vertDir };
+
+      el.resultText.textContent =
+        `תיקון: צידוד ${windClicks} קליקים ${horizDir} | ` +
+        `גובה ${elevClicks} קליקים ${vertDir}`;
+    });
+
+    function drawCertificate() {
+      const c = el.certCanvas;
+      const ctx2 = certCtx;
+      ctx2.clearRect(0, 0, c.width, c.height);
+
+      ctx2.fillStyle = '#020617';
+      ctx2.fillRect(0, 0, c.width, c.height);
+      ctx2.strokeStyle = '#374151';
+      ctx2.lineWidth = 4;
+      ctx2.strokeRect(20, 20, c.width - 40, c.height - 40);
+
+      ctx2.fillStyle = '#e5e7eb';
+      ctx2.font = 'bold 40px system-ui';
+      ctx2.textAlign = 'center';
+      ctx2.fillText('תעודת איפוס', c.width / 2, 80);
+
+      ctx2.textAlign = 'left';
+      ctx2.font = '16px system-ui';
+      const ts = new Date().toLocaleString('he-IL');
+      ctx2.fillText(`תאריך/שעה: ${ts}`, 60, 120);
+      ctx2.fillText(`פלוגה: ${el.unitCompany.value || '—'} | מחלקה: ${el.unitPlatoon.value || '—'}`, 60, 150);
+
+      const selectedWeapon = el.weaponType.options[el.weaponType.selectedIndex];
+      const weaponLabel = selectedWeapon && selectedWeapon.textContent ? selectedWeapon.textContent : '—';
+      ctx2.fillText(`נשק: ${weaponLabel}`, 60, 180);
+
+      if (state.result) {
+        const { elevClicks, windClicks, horizDir, vertDir } = state.result;
+        ctx2.fillText(
+          `תיקון כוונת: צידוד ${windClicks} קליקים ${horizDir}, גובה ${elevClicks} קליקים ${vertDir}`,
+          60, 210
+        );
+      }
+
+      if (el.canvas.width && el.canvas.height) {
+        const thumbW = 320;
+        const ratio = el.canvas.height / el.canvas.width;
+        const thumbH = thumbW * ratio;
+
+        ctx2.drawImage(
+          el.canvas,
+          0, 0, el.canvas.width, el.canvas.height,
+          c.width - thumbW - 60, 130, thumbW, thumbH
+        );
+
+        ctx2.strokeStyle = '#374151';
+        ctx2.strokeRect(c.width - thumbW - 60, 130, thumbW, thumbH);
+        ctx2.fillStyle = '#94a3b8';
+        ctx2.font = '14px system-ui';
+        ctx2.fillText('צילום דף איפוס (ממוזער)', c.width - thumbW - 60, 120);
+      }
+
+      ctx2.fillStyle = '#94a3b8';
+      ctx2.font = '14px system-ui';
+      ctx2.fillText('חתימת המדריך: ____________________', 60, c.height - 80);
+    }
+
+    el.btnMakeCert.addEventListener('click', () => {
+      drawCertificate();
+      const dataURL = el.certCanvas.toDataURL('image/png');
+      el.btnDownloadCert.href = dataURL;
+      alert('התעודה נוצרה. לחץ על "הורד תעודת איפוס כתמונה" כדי לשמור.');
+    });
+
+    el.btnOpenWhatsApp.addEventListener('click', () => {
+      const msg = encodeURIComponent('תעודת איפוס נוצרה. מצורפת התמונה לאחר הורדה/שיתוף.');
+      window.open(`https://wa.me/?text=${msg}`, '_blank');
+    });
+
+    applyRatiosFromInputs();
+    setMode('desired');
+  </script>
 </body>
+</html>
