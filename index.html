@@ -1,553 +1,113 @@
+
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>איפוס נשק - צמ״מ 8109</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 16px; background: #f5f5f5; }
-    h1 { font-size: 1.4rem; margin-bottom: 8px; }
-    .card { background: #ffffff; padding: 12px; margin-bottom: 12px; border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
-    label { display: block; margin: 6px 0 4px; font-size: 0.9rem; }
-    input, select, button { width: 100%; padding: 6px 8px; margin-bottom: 8px; font-size: 0.9rem;
-      box-sizing: border-box; }
-    button { cursor: pointer; border-radius: 6px; border: none; background: #1976d2; color: white; font-weight: bold; }
-    button.secondary { background: #555; }
-    button.small { width: auto; padding: 4px 8px; font-size: 0.8rem; margin-inline-end: 4px; }
-    button.active { background: #d32f2f; }
-    #canvasWrapper { position: relative; max-width: 100%; overflow: auto; border: 1px solid #ccc;
-      border-radius: 6px; background: #eee; }
-    #targetCanvas { max-width: 100%; touch-action: none; }
-    .status { font-size: 0.8rem; color: #333; margin-top: 4px; }
-    .result-block {
-      font-size: 0.9rem;
-      white-space: normal;
-      direction: rtl;
-      text-align: right;
-      line-height: 1.5;
-    }
-    .warning { color:#b71c1c; font-weight:bold; }
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>איפוס נשק — Zeroing</title>
+  ./assets/style.css
 </head>
 <body>
-
-<h1>איפוס נשק - צמ״מ 8109</h1>
-
-<div class="card">
-  <div class="warning">
-    ⚠ נדרש לפתוח את האפליקציה בדפדפן Chrome או Safari.
-  </div>
-</div>
-
-<div class="card">
-  <label for="shooterName">שם</label>
-  <input id="shooterName" type="text" placeholder="לדוגמה: יוסי לוי">
-
-  <label for="company">פלוגה</label>
-  <select id="company">
-    <option value=""></option>
-    <option value="א׳">א׳</option>
-    <option value="ב׳">ב׳</option>
-    <option value="ג׳">ג׳</option>
-    <option value="מסייעת">מסייעת</option>
-    <option value="מפקדה">מפקדה</option>
-  </select>
-
-  <label for="platoon">מחלקה</label>
-  <select id="platoon">
-    <option value=""></option>
-    <option value="1">1</option>
-    <option value="2">2</option>
-    <option value="3">3</option>
-    <option value="4">4</option>
-    <option value="מפקדה">מפקדה</option>
-  </select>
-
-  <label for="weaponType">סוג נשק</label>
-  <select id="weaponType" onchange="updateClicksWrapper()">
-    <option value="m16_iron">M16 ארוך – כוונות ברזל</option>
-    <option value="m16_optic">M16 ארוך – כוונת אופטית</option>
-    <option value="m16_trijicon">M16 – Trijicon</option>
-    <option value="m4_iron">M4 – כוונות ברזל</option>
-    <option value="m4_optic">M4 – כוונת אופטית</option>
-    <option value="m4_trijicon">M4 – Trijicon</option>
-    <option value="tavor">תבור</option>
-  </select>
-</div>
-
-<!-- הגדרות יחס קובייה ↔ קליקים -->
-<div class="card">
-  <h3 style="margin-top:0;">הגדרות קליקים לנשק הנבחר</h3>
-  <div class="status" id="clicksInfo">יחס קובייה-קליקים יחושב אוטומטית לפי הנשק וה-grid.</div>
-
-  <label for="gridSizeCm">גודל קובייה בדף (בס"מ)</label>
-  <input id="gridSizeCm" type="number" step="0.1" value="1" onchange="updateClicksWrapper()">
-
-  <label for="clicksPerCubeElev">קליקים בגובה עבור קובייה אחת</label>
-  <input id="clicksPerCubeElev" type="number" step="0.1">
-
-  <label for="clicksPerCubeWind">קליקים בצידוד עבור קובייה אחת</label>
-  <input id="clicksPerCubeWind" type="number" step="0.1">
-
-  <button class="small" onclick="applyClicksPerCube()">אישור יחס קובייה-קליקים</button>
-</div>
-
-<div class="card">
-  <label for="targetImage">צילום / העלאת דף איפוס</label>
-  <input id="targetImage" type="file" accept="image/*" onchange="handleFile(this)">
-  <div class="status">
-    אחרי שהתמונה נטענה:<br>
-    1. לחץ על "נקודת פגיעה רצויה" וסמן את נקודת הכוונה/פגיעה רצויה.<br>
-    2. לחץ על "הגדרת סרגל" וסמן שתי נקודות של קובייה אחת (1 ס"מ). אם תרצה להגדיר מחדש – לחץ שוב על "הגדרת סרגל".<br>
-    3. לחץ על "סמן פגיעות" וסמן את הפגיעות (מומלץ 5).<br>
-    לבסוף לחץ "חשב תיקון".
-  </div>
-</div>
-
-<div class="card">
-  <div>
-    <button id="modeAimBtn" class="small secondary" onclick="setMode('aim')">נקודת פגיעה רצויה</button>
-    <button id="modeScaleBtn" class="small secondary" onclick="setMode('scale')">הגדרת סרגל</button>
-    <button id="modeHitsBtn" class="small secondary" onclick="setMode('hits')">סמן פגיעות</button>
-    <button id="clearHitsBtn" class="small secondary" onclick="clearHits()">ניקוי פגיעות</button>
-  </div>
-  <div class="status" id="modeStatus">מצב נוכחי: אין</div>
-</div>
-
-<div class="card">
-  <div id="canvasWrapper">
-    <canvas id="targetCanvas" onclick="canvasClick(event)"></canvas>
-  </div>
-</div>
-
-<div class="card">
-  <button id="calcBtn" onclick="calc()">חשב תיקון</button>
-  <div id="result" class="result-block"></div>
-</div>
-
-<!-- תעודת איפוס -->
-<div class="card" id="certificateCard" style="display:none;">
-  <button onclick="createCertificate()">צור תעודת איפוס</button>
-  <button class="small" style="margin-inline-start:8px;" onclick="shareCertificate()">פתח WhatsApp לשליחת התעודה</button>
-  <div id="certificateInfo" class="status"></div>
-  <a id="certificateDownload" href="#" download="zero_8109_certificate.png" style="display:none; margin-top:8px; display:inline-block;">
-    הורד תעודת איפוס כתמונה
-  </a>
-  <div>
-    <img id="certificatePreview" style="max-width:100%; margin-top:8px; display:none;">
-  </div>
-  <div class="status">
-    לאחר הורדת התמונה, ניתן לשתף אותה דרך WhatsApp (שיתוף → WhatsApp + בחירת התמונה מהגלריה).
-  </div>
-</div>
-
-<script>
-var weaponProfiles = {
-  m16_iron:   { name:"M16 ארוך – כוונות ברזל",   clickCm100m:{elev:2.9,  wind:2.9},  zeroRangeM:25 },
-  m16_optic:  { name:"M16 ארוך – כוונת אופטית",  clickCm100m:{elev:0.73, wind:0.73}, zeroRangeM:25 },
-  m16_trijicon:{name:"M16 – Trijicon",           clickCm100m:{elev:0.73,wind:0.73},zeroRangeM:25 },
-  m4_iron:    { name:"M4 – כוונות ברזל",         clickCm100m:{elev:2.9,  wind:2.9},  zeroRangeM:25 },
-  m4_optic:   { name:"M4 – כוונת אופטית",        clickCm100m:{elev:0.73,wind:0.73}, zeroRangeM:25 },
-  m4_trijicon:{name:"M4 – Trijicon",             clickCm100m:{elev:0.73,wind:0.73}, zeroRangeM:25 },
-  tavor:      { name:"תבור",                      clickCm100m:{elev:0.73,wind:0.73}, zeroRangeM:25 }
-};
-
-var currentImage = null;
-var mode = null;
-var aimPoint = null;
-var scalePoints = [];
-var scaleCmPerPixel = null;
-var hits = [];
-
-var clicksPerCubeElev = null;
-var clicksPerCubeWind = null;
-
-var lastClusterCm = null;
-var lastDxErrCm = null;
-var lastDyErrCm = null;
-var lastIsZeroed = false;
-var lastWeaponName = "";
-var lastDxCm = null;
-var lastDyCm = null;
-var lastZeroDateStr = "";
-
-var canvas = document.getElementById("targetCanvas");
-var ctx = canvas.getContext("2d");
-var modeStatus = document.getElementById("modeStatus");
-
-function updateClicksWrapper(){
-  updateClicksPerCubeDefaults();
-}
-
-function updateClicksPerCubeDefaults(){
-  var weaponKey = document.getElementById("weaponType").value;
-  var grid = parseFloat(document.getElementById("gridSizeCm").value) || 1;
-  var prof = weaponProfiles[weaponKey];
-
-  var rangeFactor = prof.zeroRangeM / 100.0;
-  var elevAtRange = prof.clickCm100m.elev * rangeFactor;
-  var windAtRange = prof.clickCm100m.wind * rangeFactor;
-
-  clicksPerCubeElev = grid / elevAtRange;
-  clicksPerCubeWind = grid / windAtRange;
-
-  document.getElementById("clicksPerCubeElev").value = clicksPerCubeElev.toFixed(2);
-  document.getElementById("clicksPerCubeWind").value = clicksPerCubeWind.toFixed(2);
-
-  var info = "עבור " + prof.name +
-             " ו-grid של " + grid.toFixed(2) + " ס"מ:
-" +
-             "ברירת מחדל: כ-" + clicksPerCubeElev.toFixed(2) + " קליקים בגובה לקובייה,
-" +
-             "וכ-" + clicksPerCubeWind.toFixed(2) + " קליקים בצידוד לקובייה (ניתן לשנות).";
-  document.getElementById("clicksInfo").textContent = info;
-}
-
-function applyClicksPerCube(){
-  var elev = parseFloat(document.getElementById("clicksPerCubeElev").value);
-  var wind = parseFloat(document.getElementById("clicksPerCubeWind").value);
-  if (!isFinite(elev) || elev <= 0 || !isFinite(wind) || wind <= 0){
-    alert("אנא הזן ערכים חיוביים לקליקים לקובייה.");
-    return;
-  }
-  clicksPerCubeElev = elev;
-  clicksPerCubeWind = wind;
-  alert("עודכן יחס קובייה-קליקים.");
-}
-
-function setMode(m) {
-  mode = m;
-  var buttons = document.querySelectorAll("button.small");
-  for (var i=0; i<buttons.length; i++) {
-    buttons[i].classList.remove("active");
-  }
-  if (m === "aim")  document.getElementById("modeAimBtn").classList.add("active");
-  if (m === "scale")document.getElementById("modeScaleBtn").classList.add("active");
-  if (m === "hits") document.getElementById("modeHitsBtn").classList.add("active");
-
-  if (m === "scale") {
-    scalePoints = [];
-    scaleCmPerPixel = null;
-    modeStatus.textContent = "מצב נוכחי: הגדרת סרגל (סמן שתי נקודות של קובייה אחת)";
-    drawAll();
-  } else if (m === "aim") {
-    modeStatus.textContent = "מצב נוכחי: נקודת פגיעה רצויה";
-  } else if (m === "hits") {
-    modeStatus.textContent = "מצב נוכחי: סמן פגיעות";
-  } else {
-    modeStatus.textContent = "מצב נוכחי: אין";
-  }
-}
-
-function drawAll() {
-  if (!currentImage) return;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.drawImage(currentImage,0,0,canvas.width,canvas.height);
-
-  if (aimPoint) {
-    ctx.fillStyle="blue";
-    ctx.beginPath();
-    ctx.arc(aimPoint.x,aimPoint.y,5,0,Math.PI*2);
-    ctx.fill();
-  }
-
-  ctx.fillStyle="orange";
-  for (var i=0;i<scalePoints.length;i++){
-    var p=scalePoints[i];
-    ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();
-  }
-  if (scalePoints.length===2){
-    ctx.strokeStyle="orange";
-    ctx.beginPath();
-    ctx.moveTo(scalePoints[0].x,scalePoints[0].y);
-    ctx.lineTo(scalePoints[1].x,scalePoints[1].y);
-    ctx.stroke();
-  }
-
-  ctx.fillStyle="red";
-  for (var j=0;j<hits.length;j++){
-    var h=hits[j];
-    ctx.beginPath();ctx.arc(h.x,h.y,4,0,Math.PI*2);ctx.fill();
-    ctx.fillText(String(j+1),h.x+6,h.y);
-  }
-}
-
-function handleFile(input) {
-  try {
-    var file = input.files[0];
-    if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function(e){
-      var img = new Image();
-      img.onload = function(){
-        currentImage = img;
-        var maxW = 900, maxH = 1200;
-        var w = img.width, h = img.height;
-        var ratio = Math.min(maxW/w, maxH/h, 1);
-        canvas.width  = Math.round(w*ratio);
-        canvas.height = Math.round(h*ratio);
-        drawAll();
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  } catch (err) {
-    alert("שגיאה בטעינת התמונה: " + err.message);
-  }
-}
-
-function canvasClick(ev) {
-  if (!mode || !currentImage) return;
-  var rect = canvas.getBoundingClientRect();
-  var x = (ev.clientX - rect.left) * (canvas.width / rect.width);
-  var y = (ev.clientY - rect.top)  * (canvas.height / rect.height);
-
-  if (mode === "aim") {
-    aimPoint = {x:x,y:y};
-  } else if (mode === "scale") {
-    if (scalePoints.length < 2) {
-      scalePoints.push({x:x,y:y});
-      if (scalePoints.length === 2) {
-        var dx = scalePoints[0].x - scalePoints[1].x;
-        var dy = scalePoints[0].y - scalePoints[1].y;
-        var dist = Math.sqrt(dx*dx + dy*dy);
-        var cube = parseFloat(document.getElementById("gridSizeCm").value) || 1;
-        scaleCmPerPixel = cube / dist;
-        modeStatus.textContent = "מצב נוכחי: הגדרת סרגל (" + cube.toFixed(1) + " ס"מ = " + dist.toFixed(1) + " פיקסלים)";
-      }
-    }
-  } else if (mode === "hits") {
-    hits.push({x:x,y:y});
-  }
-  drawAll();
-}
-
-function clearHits(){
-  hits = [];
-  drawAll();
-}
-
-function calc() {
-  var res = document.getElementById("result");
-  res.innerHTML = "";
-
-  document.getElementById("certificateCard").style.display = "none";
-  document.getElementById("certificatePreview").style.display = "none";
-  document.getElementById("certificateDownload").style.display = "none";
-
-  if (!currentImage) { alert("לא נטענה תמונה"); return; }
-  if (!aimPoint) { alert("סמן נקודת פגיעה רצויה"); return; }
-  if (!scaleCmPerPixel) { alert("בצע הגדרת סרגל"); return; }
-  if (hits.length < 3) { alert("סמן לפחות 3 פגיעות (מומלץ 5)"); return; }
-
-  var sumX=0, sumY=0;
-  for (var i=0;i<hits.length;i++){
-    sumX+=hits[i].x; sumY+=hits[i].y;
-  }
-  var avgX = sumX/hits.length;
-  var avgY = sumY/hits.length;
-
-  var dx_px = avgX - aimPoint.x;
-  var dy_px = avgY - aimPoint.y;
-
-  var dx_cm = dx_px * scaleCmPerPixel;
-  var dy_cm = dy_px * scaleCmPerPixel;
-
-  var grid = parseFloat(document.getElementById("gridSizeCm").value) || 1;
-  var dx_cubes = dx_cm / grid;
-  var dy_cubes = dy_cm / grid;
-
-  var weaponKey = document.getElementById("weaponType").value;
-  var prof = weaponProfiles[weaponKey];
-
-  var dx_err_cm = dx_cm;
-  var dy_err_cm = dy_cm;
-  var dx_err_cubes = dx_cubes;
-  var dy_err_cubes = dy_cubes;
-
-  if (!clicksPerCubeElev || !clicksPerCubeWind){
-    updateClicksPerCubeDefaults();
-  }
-
-  var elevClicksFloat = dy_err_cubes * clicksPerCubeElev;
-  var windClicksFloat = dx_err_cubes * clicksPerCubeWind;
-
-  var elevClicks = Math.round(Math.abs(elevClicksFloat));
-  var windClicks = Math.round(Math.abs(windClicksFloat));
-
-  var elevDir = dy_err_cm > 0 ? "למעלה" : "למטה";
-  var windDir = dx_err_cm > 0 ? "שמאלה" : "ימינה";
-
-  var maxDistCm = 0;
-  for (var i=0;i<hits.length;i++){
-    for (var j=i+1;j<hits.length;j++){
-      var ddx_px = hits[i].x - hits[j].x;
-      var ddy_px = hits[i].y - hits[j].y;
-      var d_cm = Math.sqrt(ddx_px*ddx_px + ddy_px*ddy_px) * scaleCmPerPixel;
-      if (d_cm > maxDistCm) maxDistCm = d_cm;
-    }
-  }
-
-  var isZeroed = (maxDistCm <= 5) &&
-                 (Math.abs(dx_cm) <= 1.5) &&
-                 (Math.abs(dy_cm) <= 1.5);
-
-  lastClusterCm = maxDistCm;
-  lastDxErrCm = dx_err_cm;
-  lastDyErrCm = dy_err_cm;
-  lastIsZeroed = isZeroed;
-  lastWeaponName = prof.name;
-  lastDxCm = dx_cm;
-  lastDyCm = dy_cm;
-
-  if (isZeroed){
-    var now = new Date();
-    lastZeroDateStr = now.toLocaleString('he-IL');
-  } else {
-    lastZeroDateStr = "";
-  }
-
-  var shooterName = document.getElementById("shooterName").value || "לא צוין";
-  var company = document.getElementById("company").value || "לא צוין";
-  var platoon = document.getElementById("platoon").value || "לא צוין";
-
-  var statusHtml = "";
-  if (isZeroed){
-    statusHtml = "<span style='color:green;font-weight:bold;'>✅ הנשק עומד בקריטריוני האיפוס (מקבץ ≤ 5 ס"מ וסטייה מנקודת הכוונה ≤ 1.5 ס"מ).</span>";
-    document.getElementById("certificateCard").style.display = "block";
-  } else {
-    statusHtml = "<span style='color:#b71c1c;font-weight:bold;'>❌ הנשק עדיין לא עומד בקריטריוני האיפוס.</span>";
-  }
-
-  var dateHtml = "";
-  if (lastZeroDateStr){
-    dateHtml = "<br><strong>תאריך ושעת איפוס:</strong> " + lastZeroDateStr;
-  }
-
-  res.innerHTML =
-    "<h3 style='margin-top:0;'>סיכום תוצאות האיפוס</h3>" +
-    "<p><strong>שם:</strong> " + shooterName + "<br>" +
-    "<strong>פלוגה:</strong> " + company + "<br>" +
-    "<strong>מחלקה:</strong> " + platoon + "<br>" +
-    "<strong>נשק:</strong> " + prof.name + dateHtml + "</p>" +
-
-    "<h4>סטייה מנקודת הכוונה</h4>" +
-    "<ul>" +
-    "<li><strong>אופקי:</strong> " + dx_cm.toFixed(1) + " ס"מ (" + dx_cubes.toFixed(2) + " קוביות)</li>" +
-    "<li><strong>אנכי:</strong> " + dy_cm.toFixed(1) + " ס"מ (" + dy_cubes.toFixed(2) + " קוביות)</li>" +
-    "</ul>" +
-
-    "<h4>גודל המקבץ</h4>" +
-    "<p><strong>" + maxDistCm.toFixed(1) + " ס"מ</strong> (המרחק בין שתי הפגיעות הרחוקות ביותר)</p>" +
-
-    "<h4>תיקוני כוונת מומלצים</h4>" +
-    "<p>" +
-    "<strong>גובה:</strong> " + elevClicks + " קליקים " + elevDir + "<br>" +
-    "<strong>צידוד:</strong> " + windClicks + " קליקים " + windDir +
-    "</p>" +
-
-    "<h4>סטטוס איפוס</h4>" +
-    "<p>" + statusHtml + "</p>" +
-    "<p class='status'>הערה: יחס קובייה-קליקים ניתנים לעדכון בהגדרות.</p>";
-}
-
-function createCertificate(){
-  if (!lastIsZeroed){
-    alert("הנשק לא מאופס לפי הקריטריונים – לא ניתן ליצור תעודה.");
-    return;
-  }
-  if (!currentImage){
-    alert("אין תמונה פעילה.");
-    return;
-  }
-
-  var shooterName = document.getElementById("shooterName").value || "לא צוין";
-  var company = document.getElementById("company").value || "לא צוין";
-  var platoon = document.getElementById("platoon").value || "לא צוין";
-  var dateStr = lastZeroDateStr || new Date().toLocaleString('he-IL');
-
-  var cw = canvas.width;
-  var ch = canvas.height;
-  var extra = 260;
-
-  var certCanvas = document.createElement("canvas");
-  certCanvas.width = cw;
-  certCanvas.height = ch + extra;
-
-  var cctx = certCanvas.getContext("2d");
-  cctx.fillStyle = "white";
-  cctx.fillRect(0,0,certCanvas.width,certCanvas.height);
-
-  cctx.drawImage(canvas,0,0);
-
-  cctx.fillStyle = "black";
-  cctx.font = "20px Arial";
-
-  var y = ch + 30;
-  cctx.fillText("תעודת איפוס נשק", 20, y);
-  y += 28;
-  cctx.font = "16px Arial";
-  cctx.fillText("שם: " + shooterName, 20, y);
-  y += 22;
-  cctx.fillText("פלוגה: " + company + ", מחלקה: " + platoon, 20, y);
-  y += 22;
-  cctx.fillText("סוג נשק: " + lastWeaponName, 20, y);
-  y += 22;
-  cctx.fillText("תאריך ושעה: " + dateStr, 20, y);
-  y += 22;
-  cctx.fillText("גודל מקבץ: " + lastClusterCm.toFixed(1) + " ס"מ", 20, y);
-  y += 22;
-  cctx.fillText("סטייה ממוצעת אופקית: " + lastDxErrCm.toFixed(1) + " ס"מ", 20, y);
-  y += 22;
-  cctx.fillText("סטייה ממוצעת אנכית: " + lastDyErrCm.toFixed(1) + " ס"מ", 20, y);
-  y += 30;
-  cctx.fillText("מאשר בזה כי הנשק מאופס בהתאם לקריטריונים שנקבעו.", 20, y);
-
-  var dataUrl = certCanvas.toDataURL("image/png");
-
-  var preview = document.getElementById("certificatePreview");
-  var link = document.getElementById("certificateDownload");
-
-  preview.src = dataUrl;
-  preview.style.display = "block";
-  link.href = dataUrl;
-  link.style.display = "inline-block";
-
-  document.getElementById("certificateInfo").textContent =
-    "תעודת האיפוס נוצרה. הורד את התמונה, שמור אותה בגלריה ואז שתף דרך WhatsApp.";
-}
-
-function shareCertificate(){
-  if (!lastIsZeroed){
-    alert("הנשק לא מאופס לפי הקריטריונים – אין תעודה לשליחה.");
-    return;
-  }
-  var shooterName = document.getElementById("shooterName").value || "לא צוין";
-  var company = document.getElementById("company").value || "לא צוין";
-  var platoon = document.getElementById("platoon").value || "לא צוין";
-  var datePart = lastZeroDateStr ? (" בתאריך " + lastZeroDateStr) : "";
-  var text = "תעודת איפוס נשק עבור " + shooterName +
-             " (פלוגה " + company + ", מחלקה " + platoon + ", נשק " + lastWeaponName + ")" +
-             datePart + ". מצורפת תמונת התעודה (יש לבחור אותה מהגלריה).";
-
-  if (navigator.share) {
-    navigator.share({
-      text: text,
-      title: "תעודת איפוס נשק"
-    }).catch(function(err){
-      console.log("share error", err);
-      window.location.href = "whatsapp://send?text=" + encodeURIComponent(text);
-    });
-  } else {
-    window.location.href = "whatsapp://send?text=" + encodeURIComponent(text);
-  }
-}
-
-window.onload = function(){
-  updateClicksWrapper();
-};
-</script>
-
+  <header>
+    <h1>איפוס נשק — צמ"מ 8109</h1>
+    <p class="hint">⚠ מומלץ לפתוח ב‑Chrome / Safari. עובד גם ב‑Edge (ללא תוספים חוסמים).</p>
+  </header>
+
+  <main>
+    <section class="controls">
+      <h2>הגדרות קליקים לנשק הנבחר</h2>
+      <div class="grid g2">
+        <label>
+          שם פלוגה
+          <select id="unitCompany">
+            <option value="א׳">א׳</option>
+            <option value="ב׳">ב׳</option>
+            <option value="ג׳">ג׳</option>
+            <option value="מסייעת">מסייעת</option>
+            <option value="מפקדה">מפקדה</option>
+          </select>
+        </label>
+        <label>
+          מחלקה
+          <select id="unitPlatoon">
+            <option value="מפקדה">מפקדה</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="full">
+        סוג נשק
+        <select id="weaponType">
+          <option value="">בחר נשק…</option>
+          <option value="M16-iron">M16 ארוך — כוונות ברזל</option>
+          <option value="M16-optic">M16 ארוך — כוונת אופטית</option>
+          <option value="M16-trijicon">M16 — Trijicon</option>
+          <option value="M4-iron">M4 — כוונות ברזל</option>
+          <option value="M4-optic">M4 — כוונת אופטית</option>
+          <option value="M4-trijicon">M4 — Trijicon</option>
+          <option value="Tavor">תבור</option>
+        </select>
+      </label>
+
+      <div class="grid g3">
+        <label>
+          גודל קובייה בדף (בס"מ)
+          <input type="number" id="gridSizeCm" value="1" step="0.1" min="0.1">
+        </label>
+        <label>
+          קליקים בגובה עבור קובייה אחת
+          <input type="number" id="elevClicksPerSquare" value="0" step="0.1" min="0">
+        </label>
+        <label>
+          קליקים בצידוד עבור קובייה אחת
+          <input type="number" id="windClicksPerSquare" value="0" step="0.1" min="0">
+        </label>
+      </div>
+      <p class="note">הערה: אם ברצונך חישוב אוטומטי לפי הנשק, עדכן את טבלת היחסים ב‑<code>assets/app.js</code> (ראה הערות בקובץ).</p>
+
+      <div class="actions">
+        <button id="btnConfirmRatios" class="primary">אישור יחס קובייה‑קליקים</button>
+      </div>
+    </section>
+
+    <section class="upload">
+      <h2>צילום / העלאת דף איפוס</h2>
+      <input type="file" id="zeroingImage" accept="image/*">
+      <div class="canvasWrap">
+        <canvas id="zeroingCanvas" width="800" height="600" aria-label="קנבס איפוס"></canvas>
+        <div class="toolbar">
+          <button id="btnDesiredHit">נקודת פגיעה רצויה</button>
+          <button id="btnRuler">הגדרת סרגל (1 ס"מ)</button>
+          <button id="btnHits">סמן פגיעות</button>
+          <button id="btnClearHits" class="ghost">ניקוי פגיעות</button>
+          <span id="modeLabel">מצב נוכחי: אין</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="btnCompute" class="primary">חשב תיקון</button>
+        <span id="resultText" class="result"></span>
+      </div>
+    </section>
+
+    <section class="certificate">
+      <h2>תעודת איפוס</h2>
+      <div class="actions">
+        <button id="btnMakeCert">צור תעודת איפוס</button>
+        <button id="btnOpenWhatsApp" class="ghost">פתח WhatsApp לשליחת התעודה</button>
+        <a id="btnDownloadCert" class="link" download="zeroing_certificate.png">הורד תעודת איפוס כתמונה</a>
+      </div>
+      <canvas id="certCanvas" width="1024" height="768" class="cert"></canvas>
+      <p class="hint">לאחר הורדת התמונה ניתן לשתף אותה דרך WhatsApp (שיתוף → WhatsApp + בחירת התמונה מהגלריה).</p>
+    </section>
+  </main>
+
+  <footer>
+    <small>© 2025 — נבנה ל‑GitHub Pages. ללא ספריות חיצוניות. עובד ב‑Chrome/Safari/Edge.</small>
+  </footer>
+
+  ./assets/app.js</script>
 </body>
-</html>

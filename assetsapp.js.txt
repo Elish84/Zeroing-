@@ -1,0 +1,263 @@
+
+// ====== Zeroing App (Plain JS) ======
+// בנוי לעבוד על GitHub Pages ללא ספריות חיצוניות
+// אם ברצונך חישוב אוטומטי של יחס קליקים לפי נשק, מלא את הטבלה הבאה בערכים הנכונים (לקובייה של gridSizeCm ס"מ)
+// הערכים להלן הם PLACEHOLDER ולא אמיתיים — השארנו אותם ריקים בכוונה. הזן את הערכים האמיתיים לפי הנהלים שלכם.
+const WEAPON_RATIOS = {
+  // דוגמה: 'M4-iron': { elevClicksPerSquare: 3, windClicksPerSquare: 3 }
+  'M16-iron': null,
+  'M16-optic': null,
+  'M16-trijicon': null,
+  'M4-iron': null,
+  'M4-optic': null,
+  'M4-trijicon': null,
+  'Tavor': null,
+};
+
+// ====== מצב אפליקציה ======
+const state = {
+  mode: 'none',
+  desiredHit: null,      // {x,y}
+  ruler: [],             // [{x,y}, {x,y}] => מייצג 1 ס"מ
+  hits: [],              // [{x,y}, ...]
+  image: null,           // Image()
+  pixelsPerCm: null,     // נקבע מהסרגל
+  config: {
+    gridSizeCm: 1,
+    elevClicksPerSquare: 0,
+    windClicksPerSquare: 0,
+  },
+  result: null,          // { dxCm, dyCm, elevClicks, windClicks, directions }
+};
+
+// ====== אלמנטים ======
+const el = {
+  unitCompany: document.getElementById('unitCompany'),
+  unitPlatoon: document.getElementById('unitPlatoon'),
+  weaponType: document.getElementById('weaponType'),
+  gridSizeCm: document.getElementById('gridSizeCm'),
+  elevClicksPerSquare: document.getElementById('elevClicksPerSquare'),
+  windClicksPerSquare: document.getElementById('windClicksPerSquare'),
+  btnConfirmRatios: document.getElementById('btnConfirmRatios'),
+  fileInput: document.getElementById('zeroingImage'),
+  canvas: document.getElementById('zeroingCanvas'),
+  modeLabel: document.getElementById('modeLabel'),
+  btnDesiredHit: document.getElementById('btnDesiredHit'),
+  btnRuler: document.getElementById('btnRuler'),
+  btnHits: document.getElementById('btnHits'),
+  btnClearHits: document.getElementById('btnClearHits'),
+  btnCompute: document.getElementById('btnCompute'),
+  resultText: document.getElementById('resultText'),
+  btnMakeCert: document.getElementById('btnMakeCert'),
+  btnDownloadCert: document.getElementById('btnDownloadCert'),
+  btnOpenWhatsApp: document.getElementById('btnOpenWhatsApp'),
+  certCanvas: document.getElementById('certCanvas'),
+};
+const ctx = el.canvas.getContext('2d');
+const certCtx = el.certCanvas.getContext('2d');
+
+// ====== עוזרים ======
+function setMode(m){ state.mode = m; el.modeLabel.textContent = `מצב נוכחי: ${m==='none'?'אין': m==='desired'?'נקודת רצויה': m==='ruler'?'סרגל 1 ס\"מ': 'פגיעות'}`; draw(); }
+function dist(a,b){ const dx=a.x-b.x, dy=a.y-b.y; return Math.hypot(dx,dy); }
+function avg(points){ const n=points.length; const s=points.reduce((acc,p)=>({x:acc.x+p.x,y:acc.y+p.y}),{x:0,y:0}); return {x:s.x/n,y:s.y/n}; }
+function pxToCm(px){ if(!state.pixelsPerCm) return null; return px / state.pixelsPerCm; }
+function cmToSquares(cm){ return cm / state.config.gridSizeCm; }
+
+function updateRatiosFromWeapon(){
+  const key = el.weaponType.value;
+  const cfg = WEAPON_RATIOS[key];
+  if(cfg){
+    el.elevClicksPerSquare.value = cfg.elevClicksPerSquare;
+    el.windClicksPerSquare.value = cfg.windClicksPerSquare;
+  }
+}
+
+// ====== ציור על הקנבס ======
+function clearCanvas(){ ctx.fillStyle = '#0b1220'; ctx.fillRect(0,0,el.canvas.width, el.canvas.height); }
+function draw(){
+  clearCanvas();
+  // צייר תמונה אם קיימת
+  if(state.image){
+    const cw = el.canvas.width, ch = el.canvas.height;
+    const iw = state.image.width, ih = state.image.height;
+    // התאמה מלאה בגבולות הקנבס
+    ctx.drawImage(state.image, 0, 0, cw, ch);
+  }
+  // רצוי
+  if(state.desiredHit){
+    drawCross(state.desiredHit.x, state.desiredHit.y, '#22c55e');
+    label(state.desiredHit.x+6, state.desiredHit.y-8, 'רצוי', '#22c55e');
+  }
+  // סרגל
+  if(state.ruler.length===2){
+    const [a,b] = state.ruler; const d = dist(a,b);
+    drawLine(a,b,'#38bdf8');
+    drawCircle(a.x, a.y, 5, '#38bdf8');
+    drawCircle(b.x, b.y, 5, '#38bdf8');
+    label((a.x+b.x)/2, (a.y+b.y)/2 - 10, `1 ס\"מ (${d.toFixed(1)}px)`, '#38bdf8');
+  } else if(state.ruler.length===1){
+    drawCircle(state.ruler[0].x, state.ruler[0].y, 5, '#38bdf8');
+  }
+  // פגיעות
+  if(state.hits.length){
+    state.hits.forEach(p=> drawCircle(p.x, p.y, 5, '#ef4444'));
+    const c = avg(state.hits);
+    drawCross(c.x, c.y, '#ef4444');
+    label(c.x+6, c.y-8, 'מרכז קבוצה', '#ef4444');
+  }
+}
+function drawCircle(x,y,r,color){ ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.stroke(); }
+function drawCross(x,y,color){ ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x-8,y); ctx.lineTo(x+8,y); ctx.moveTo(x,y-8); ctx.lineTo(x,y+8); ctx.stroke(); }
+function drawLine(a,b,color){ ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
+function label(x,y,text,color){ ctx.fillStyle=color; ctx.font='bold 13px system-ui'; ctx.textAlign='left'; ctx.fillText(text,x,y); }
+
+// ====== אירועי אינפוט ======
+el.weaponType.addEventListener('change', updateRatiosFromWeapon);
+
+el.btnConfirmRatios.addEventListener('click', () => {
+  state.config.gridSizeCm = parseFloat(el.gridSizeCm.value)||1;
+  state.config.elevClicksPerSquare = parseFloat(el.elevClicksPerSquare.value)||0;
+  state.config.windClicksPerSquare = parseFloat(el.windClicksPerSquare.value)||0;
+  alert('היחס עודכן. ודא שהסרגל (1 ס\"מ) והפגיעות הוגדרו לפני חישוב.');
+});
+
+el.fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0]; if(!file) return;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    state.image = img;
+    // קנה מידה הקנבס לגודל התמונה (שומר על רזולוציה מקסימלית עד 1600)
+    const maxW = 1600, maxH = 1200;
+    let w = img.width, h = img.height;
+    const ratio = Math.min(maxW/w, maxH/h, 1);
+    el.canvas.width = Math.round(w*ratio);
+    el.canvas.height = Math.round(h*ratio);
+    draw(); URL.revokeObjectURL(url);
+  };
+  img.src = url;
+});
+
+el.btnDesiredHit.addEventListener('click', ()=> setMode('desired'));
+el.btnRuler.addEventListener('click', ()=> { state.ruler = []; setMode('ruler'); });
+el.btnHits.addEventListener('click', ()=> { setMode('hits'); });
+el.btnClearHits.addEventListener('click', ()=> { state.hits = []; draw(); });
+
+el.canvas.addEventListener('click', (ev) => {
+  const rect = el.canvas.getBoundingClientRect();
+  const x = ev.clientX - rect.left; const y = ev.clientY - rect.top;
+  if(state.mode==='desired'){
+    state.desiredHit = {x,y};
+  } else if(state.mode==='ruler'){
+    state.ruler.push({x,y}); if(state.ruler.length>2) state.ruler = state.ruler.slice(-2);
+    if(state.ruler.length===2){
+      const dpx = dist(state.ruler[0], state.ruler[1]);
+      state.pixelsPerCm = dpx;  // שתי נקודות מייצגות 1 ס"מ → פיקסלים לכל ס"מ
+    }
+  } else if(state.mode==='hits'){
+    state.hits.push({x,y});
+  }
+  draw();
+});
+
+// ====== חישוב תיקון ======
+el.btnCompute.addEventListener('click', () => {
+  if(!state.desiredHit){ return alert('בחר/סמן נקודת פגיעה רצויה.'); }
+  if(state.ruler.length!==2 || !state.pixelsPerCm){ return alert('הגדר סרגל (שתי נקודות של 1 ס\"מ).'); }
+  if(state.hits.length<1){ return alert('סמן פגיעות (מומלץ 5).'); }
+
+  const center = avg(state.hits);
+  const dxPx = state.desiredHit.x - center.x;   // +ימינה
+  const dyPx = state.desiredHit.y - center.y;   // +מטה (ציר Y מטה)
+
+  const dxCm = pxToCm(dxPx);
+  const dyCm = pxToCm(dyPx);
+
+  const dxSquares = cmToSquares(Math.abs(dxCm));
+  const dySquares = cmToSquares(Math.abs(dyCm));
+
+  const elevClicks = Math.round(dySquares * state.config.elevClicksPerSquare);
+  const windClicks = Math.round(dxSquares * state.config.windClicksPerSquare);
+
+  const horizDir = dxCm>0 ? 'ימינה' : dxCm<0 ? 'שמאלה' : '—';
+  const vertDir = dyCm>0 ? 'מטה' : dyCm<0 ? 'מעלה' : '—';
+
+  state.result = { dxCm, dyCm, elevClicks, windClicks, horizDir, vertDir };
+  el.resultText.textContent = `תיקון: צידוד ${windClicks} קליקים ${horizDir} | גובה ${elevClicks} קליקים ${vertDir}`;
+});
+
+// ====== תעודת איפוס ======
+function drawCertificate(){
+  const c = el.certCanvas; const ctx = certCtx; ctx.clearRect(0,0,c.width,c.height);
+  ctx.fillStyle = '#0b1220'; ctx.fillRect(0,0,c.width,c.height);
+
+  // מסגרת
+  ctx.strokeStyle = '#374151'; ctx.lineWidth = 4; ctx.strokeRect(20,20,c.width-40,c.height-40);
+
+  // כותרת
+  ctx.fillStyle = '#e5e7eb'; ctx.font = 'bold 40px system-ui'; ctx.textAlign='center';
+  ctx.fillText('תעודת איפוס', c.width/2, 80);
+  ctx.textAlign='left'; ctx.font = '16px system-ui';
+  const ts = new Date().toLocaleString('he-IL');
+  ctx.fillText(`תאריך/שעה: ${ts}`, 60, 120);
+  ctx.fillText(`פלוגה: ${el.unitCompany.value} | מחלקה: ${el.unitPlatoon.value}`, 60, 150);
+  const wLabel = document.querySelector('#weaponType option:checked').textContent || '—';
+  ctx.fillText(`נשק: ${wLabel}`, 60, 180);
+
+  // תוצאות
+  ctx.font = 'bold 22px system-ui'; ctx.fillStyle = '#22c55e';
+  if(state.result){
+    ctx.fillText(`תיקון: צידוד ${state.result.windClicks} קליקים ${state.result.horizDir} | גובה ${state.result.elevClicks} קליקים ${state.result.vertDir}`, 60, 220);
+    ctx.fillStyle = '#94a3b8'; ctx.font = '16px system-ui';
+    ctx.fillText(`ΔX: ${state.result.dxCm.toFixed(2)} ס\"מ | ΔY: ${state.result.dyCm.toFixed(2)} ס\"מ`, 60, 248);
+  } else {
+    ctx.fillStyle = '#f59e0b'; ctx.fillText('טרם חושב תיקון — מלא נתונים ולחץ "חשב תיקון"', 60, 220);
+  }
+
+  // תמונת מטרה ממוזערת
+  if(state.image){
+    const thumbW = 480, thumbH = 360;
+    ctx.drawImage(el.canvas, 0,0, el.canvas.width, el.canvas.height, c.width-thumbW-60, 120, thumbW, thumbH);
+    ctx.strokeStyle = '#374151'; ctx.strokeRect(c.width-thumbW-60, 120, thumbW, thumbH);
+    ctx.fillStyle = '#94a3b8'; ctx.font='14px system-ui';
+    ctx.fillText('צילום דף איפוס (ממוזער)', c.width-thumbW-60, 110);
+  }
+
+  // חתימה
+  ctx.fillStyle = '#94a3b8'; ctx.font = '14px system-ui';
+  ctx.fillText('חתימת המדריך: ____________', 60, c.height-80);
+}
+
+el.btnMakeCert.addEventListener('click', () => {
+  drawCertificate();
+  const dataURL = el.certCanvas.toDataURL('image/png');
+  el.btnDownloadCert.href = dataURL;
+  alert('התעודה נוצרה. לחץ על "הורד תעודת איפוס כתמונה" כדי לשמור.');
+});
+
+el.btnOpenWhatsApp.addEventListener('click', () => {
+  const msg = encodeURIComponent('תעודת איפוס נוצרה. מצורפת התמונה לאחר הורדה/שיתוף.');
+  window.open(`https://wa.me/?text=${msg}`, '_blank');
+});
+
+// ====== טלמטריה (אופציונלי) ======
+// אם יש לך Endpoint, הגדר כאן כתובת HTTPS. אחרת ישאר ריק.
+const TELEMETRY_ENDPOINT = '';
+async function sendTelemetry(eventName, payload){
+  if(!TELEMETRY_ENDPOINT) return; // מושבת
+  try {
+    const res = await fetch(TELEMETRY_ENDPOINT, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ event: eventName, ...payload })
+    });
+    if(!res.ok) throw new Error('Telemetry failed: '+res.status);
+  } catch(err){ console.warn('Telemetry error:', err); }
+}
+
+// דוגמה: שליחת טלמטריה בעת לחיצה
+['btnDesiredHit','btnRuler','btnHits','btnCompute','btnMakeCert'].forEach(id=>{
+  const b = document.getElementById(id); if(!b) return;
+  b.addEventListener('click', ()=> sendTelemetry('click', { id }));
+});
+
+// ====== אתחול ======
