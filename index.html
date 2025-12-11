@@ -346,7 +346,6 @@
   <footer>
     <small>© 2025 — נבנה ל-GitHub Pages. ללא ספריות חיצוניות. עובד ב-Chrome/Safari/Edge.</small>
   </footer>
-
   <script>
     // ===== הגדרות ו-state =====
     let WEAPON_RATIOS = {}; // נטען מ-weapons.json
@@ -475,34 +474,34 @@
 
       if (state.desiredHit) {
         drawCross(state.desiredHit.x, state.desiredHit.y, '#22c55e');
-        label(state.desiredHit.x + 6, state.desiredHit.y - 8, 'רצוי', '#22c55e');
+        label(state.desiredHit.x + 6, state.desiredHit.y - 10, 'רצוי', '#22c55e');
       }
 
       if (state.ruler.length === 2) {
         const [a, b] = state.ruler;
         drawLine(a, b, '#38bdf8');
-        drawCircle(a.x, a.y, 5, '#38bdf8');
-        drawCircle(b.x, b.y, 5, '#38bdf8');
+        drawCircle(a.x, a.y, 7, '#38bdf8');
+        drawCircle(b.x, b.y, 7, '#38bdf8');
         const d = dist(a, b);
-        label((a.x + b.x) / 2, (a.y + b.y) / 2 - 10,
+        label((a.x + b.x) / 2, (a.y + b.y) / 2 - 12,
           `1 ס"מ (${d.toFixed(1)}px)`, '#38bdf8');
       } else if (state.ruler.length === 1) {
-        drawCircle(state.ruler[0].x, state.ruler[0].y, 5, '#38bdf8');
+        drawCircle(state.ruler[0].x, state.ruler[0].y, 7, '#38bdf8');
       }
 
       if (state.hits.length) {
-        state.hits.forEach(p => drawCircle(p.x, p.y, 5, '#ef4444'));
+        state.hits.forEach(p => drawCircle(p.x, p.y, 8, '#ef4444'));
         const c = avg(state.hits);
         if (c) {
           drawCross(c.x, c.y, '#ef4444');
-          label(c.x + 6, c.y - 8, 'מרכז קבוצה', '#ef4444');
+          label(c.x + 6, c.y - 10, 'מרכז קבוצה', '#ef4444');
         }
       }
     }
 
     function drawCircle(x, y, r, color) {
       ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
       ctx.stroke();
@@ -510,18 +509,19 @@
 
     function drawCross(x, y, color) {
       ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3;
+      const size = 10;
       ctx.beginPath();
-      ctx.moveTo(x - 8, y);
-      ctx.lineTo(x + 8, y);
-      ctx.moveTo(x, y - 8);
-      ctx.lineTo(x, y + 8);
+      ctx.moveTo(x - size, y);
+      ctx.lineTo(x + size, y);
+      ctx.moveTo(x, y - size);
+      ctx.lineTo(x, y + size);
       ctx.stroke();
     }
 
     function drawLine(a, b, color) {
       ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
       ctx.lineTo(b.x, b.y);
@@ -587,7 +587,6 @@
     function handleCanvasClick(ev) {
       if (!state.image) return;
       const rect = el.canvas.getBoundingClientRect();
-      // התאמה לסקייל בין גודל הקנבס הפנימי לגודל על המסך
       const scaleX = el.canvas.width / rect.width;
       const scaleY = el.canvas.height / rect.height;
       const x = (ev.clientX - rect.left) * scaleX;
@@ -641,8 +640,15 @@
       const elevClicks = Math.round(dySquares * state.config.elevClicksPerSquare);
       const windClicks = Math.round(dxSquares * state.config.windClicksPerSquare);
 
-      const horizDir = dxCm > 0 ? 'ימינה' : dxCm < 0 ? 'שמאלה' : '—';
-      const vertDir = dyCm > 0 ? 'מטה' : dyCm < 0 ? 'מעלה' : '—';
+      // ✅ כיוון התיקון הוא הפוך לכיוון הסטייה
+      const correctionHorizDir =
+        dxCm > 0 ? 'שמאלה' :
+        dxCm < 0 ? 'ימינה' : '—';
+
+      const correctionVertDir =
+        dyCm > 0 ? 'מעלה'  :   // הפגיעה מתחת -> מתקנים מעלה
+        dyCm < 0 ? 'מטה'   :   // הפגיעה מעל -> מתקנים מטה
+        '—';
 
       // גודל מקבץ: המרחק הכי גדול בין שתי פגיעות
       let maxDistPx = 0;
@@ -658,7 +664,7 @@
       state.result = {
         dxCm, dyCm,
         elevClicks, windClicks,
-        horizDir, vertDir,
+        correctionHorizDir, correctionVertDir,
         groupSizeCm, groupSizeSquares
       };
 
@@ -667,8 +673,8 @@
         : '';
 
       el.resultText.textContent =
-        `תיקון: צידוד ${windClicks} קליקים ${horizDir} | ` +
-        `גובה ${elevClicks} קליקים ${vertDir}` + groupText;
+        `תיקון: צידוד ${windClicks} קליקים ${correctionHorizDir} | ` +
+        `גובה ${elevClicks} קליקים ${correctionVertDir}` + groupText;
     });
 
     // ===== תעודת איפוס =====
@@ -702,19 +708,40 @@
       ctx2.fillText(`נשק: ${weaponLabel} | אמצעי: ${opticLabel}`, 60, 210);
 
       if (state.result) {
-        const { elevClicks, windClicks, horizDir, vertDir, groupSizeCm, groupSizeSquares } = state.result;
+        const {
+          elevClicks, windClicks,
+          correctionHorizDir, correctionVertDir,
+          groupSizeCm, groupSizeSquares,
+          dxCm, dyCm
+        } = state.result;
+
         ctx2.fillText(
-          `תיקון: צידוד ${windClicks} קליקים ${horizDir}, גובה ${elevClicks} קליקים ${vertDir}`,
+          `תיקון כוונת: צידוד ${windClicks} קליקים ${correctionHorizDir}, גובה ${elevClicks} קליקים ${correctionVertDir}`,
           60, 240
         );
+
         if (groupSizeCm) {
           ctx2.fillText(
             `גודל מקבץ: ≈ ${groupSizeCm.toFixed(1)} ס"מ (${groupSizeSquares.toFixed(1)} קוביות)`,
             60, 270
           );
         }
+
+        // ✅ תנאי "הנשק אופס בהצלחה"
+        if (groupSizeCm) {
+          const radialErrorCm = Math.sqrt(dxCm * dxCm + dyCm * dyCm);
+          if (groupSizeCm < 5 && Math.abs(radialErrorCm) < 2) {
+            ctx2.fillStyle = '#22c55e';
+            ctx2.fillText(
+              'הנשק אופס בהצלחה (מקבץ < 5 ס"מ וסטייה < 2 ס"מ מנקודת המכוון)',
+              60, 300
+            );
+            ctx2.fillStyle = '#e5e7eb';
+          }
+        }
       }
 
+      // צילום דף איפוס ממוזער
       if (el.canvas.width && el.canvas.height) {
         const thumbW = 320;
         const ratio = el.canvas.height / el.canvas.width;
@@ -732,21 +759,21 @@
         ctx2.font = '14px system-ui';
         ctx2.fillText('צילום דף איפוס (ממוזער)', c.width - thumbW - 60, 120);
       }
-
-      ctx2.fillStyle = '#94a3b8';
-      ctx2.font = '14px system-ui';
-      ctx2.fillText('חתימת המדריך: ____________________', 60, c.height - 80);
     }
 
     el.btnMakeCert.addEventListener('click', () => {
       drawCertificate();
       const dataURL = el.certCanvas.toDataURL('image/png');
       el.btnDownloadCert.href = dataURL;
-      alert('התעודה נוצרה. לחץ על "הורד תעודת איפוס כתמונה" כדי לשמור.');
+      alert('התעודה נוצרה. הורד את התמונה לשמירה/שיתוף.');
     });
 
+    // וואטסאפ – ⚠ אי אפשר לצרף קובץ אוטומטית מהדפדפן, רק לפתוח הודעה עם טקסט
     el.btnOpenWhatsApp.addEventListener('click', () => {
-      const msg = encodeURIComponent('תעודת איפוס נוצרה. מצורפת התמונה לאחר הורדה/שיתוף.');
+      const msg = encodeURIComponent(
+        'תעודת איפוס נוצרה. שמור את תמונת התעודה והתמונה מהדף כקובצי תמונה, ' +
+        'ולאחר מכן צרף אותם ידנית מתוך הגלריה להודעת ה-WhatsApp.'
+      );
       window.open(`https://wa.me/?text=${msg}`, '_blank');
     });
 
@@ -757,3 +784,4 @@
   </script>
 </body>
 </html>
+
