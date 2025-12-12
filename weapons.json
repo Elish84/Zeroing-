@@ -2,7 +2,7 @@
   "M4": {
     "iron":   { "elevClicksPerSquare": 3.0, "windClicksPerSquare": 3.0 },
     "optic":  { "elevClicksPerSquare": 2.0, "windClicksPerSquare": 2.0 },
-    "trijicon": { "elevClicksPerSquare": 1.5, "windClicksPerSquare": 1.5 }
+    "trijicon": { "elevClicksPerSquare":5, "windClicksPerSquare": 15 }
   },
   "M16": {
     "iron":   { "elevClicksPerSquare": 3.0, "windClicksPerSquare": 3.0 },
