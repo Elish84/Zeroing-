@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>איפוס נשק — צמ"מ 8109</title>
+
+  <style>
+    :root {
+      --bg: #020617;
+      --panel: #020617;
+      --panel-border: #1f2937;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --primary: #22c55e;
+      --primary-dark: #16a34a;
+      --accent: #38bdf8;
+      --danger: #ef4444;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%);
+      color: var(--text);
+      padding: 16px;
+    }
+
+    header {
+      max-width: 1080px;
+      margin: 0 auto 16px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 28px;
+    }
+
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    section.panel {
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 14px;
+      border: 1px solid var(--panel-border);
+      padding: 16px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+    }
+
+    section.panel h2 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+
+    .hint { color: var(--muted); font-size: 13px; }
+    .note { color: var(--muted); font-size: 13px; margin-top: 8px; }
+
+    .grid { display: grid; gap: 10px; }
+    .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    @media (max-width: 800px) {
+      .g3, .g2 { grid-template-columns: 1fr; }
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 14px;
+    }
+
+    .full { display: block; margin-top: 10px; }
+
+    input[type="number"],
+    input[type="text"],
+    select,
+    input[type="file"] {
+      background: #020617;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      padding: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    input[type="file"] {
+      padding-inline-start: 0;
+    }
+
+    input:focus,
+    select:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    button {
+      border-radius: 10px;
+      border: 1px solid #4b5563;
+      background: #020617;
+      color: var(--text);
+      padding: 8px 14px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button.primary {
+      background: var(--primary);
+      border-color: var(--primary-dark);
+      color: #052e16;
+      font-weight: 700;
+    }
+
+    button.ghost {
+      background: transparent;
+      border-color: #374151;
+      color: var(--muted);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    a.link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    a.link:hover { text-decoration: underline; }
+
+    .result { font-weight: 700; font-size: 14px; }
+
+    .canvasWrap {
+      margin-top: 12px;
+      border-radius: 12px;
+      border: 1px dashed #374151;
+      padding: 8px;
+      background: #020617;
+    }
+
+    #zeroingCanvas {
+      width: 100%;
+      max-width: 100%;
+      display: block;
+      background: #020617;
+      border-radius: 8px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    #modeLabel { font-size: 13px; color: var(--muted); }
+
+    .cert {
+      width: 100%;
+      max-width: 100%;
+      margin-top: 12px;
+      border-radius: 12px;
+      border: 1px solid #1f2937;
+      background: #020617;
+    }
+
+    footer {
+      max-width: 1080px;
+      margin: 16px auto 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>איפוס נשק — צמ"מ 8109</h1>
+    <p class="hint">⚠ מומלץ לפתוח ב-Chrome / Safari. עובד גם ב-Edge (ללא תוספים חוסמים).</p>
+  </header>
+
+  <main>
+    <!-- פרטי מסגרת + פרטי מאפס -->
+    <section class="panel">
+      <h2>פרטי מסגרת ומאפס</h2>
+      <div class="grid g2">
+        <label>
+          פלוגה
+          <select id="unitCompany">
+            <option value="">—</option>
+            <option value="א">א'</option>
+            <option value="ב">ב'</option>
+            <option value="ג">ג'</option>
+          </select>
+        </label>
+
+        <label>
+          מחלקה
+          <select id="unitPlatoon">
+            <option value="">—</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
+        </label>
+
+        <label>
+          שם המאפס / היורה
+          <input type="text" id="shooterName" placeholder="שם מלא">
+        </label>
+      </div>
+    </section>
+
+    <!-- בחירת נשק ואמצעי -->
+    <section class="panel">
+      <h2>נשק ואמצעי כוונת</h2>
+      <div class="grid g2">
+        <label>
+          סוג נשק
+          <select id="weaponType">
+            <option value="">בחירת נשק ידנית</option>
+            <option value="M16">M16</option>
+            <option value="M4">M4</option>
+            <option value="Tavor">תבור</option>
+          </select>
+        </label>
+
+        <label>
+          אמצעי / סוג כוונת
+          <select id="opticType">
+            <option value="">ללא (ערכים ידניים)</option>
+            <option value="iron">כוונות ברזל</option>
+            <option value="optic">כוונת אופטית</option>
+            <option value="trijicon">Trijicon / ACOG</option>
+          </select>
+        </label>
+      </div>
+
+      <p class="note">
+        בחירת נשק ואמצעי תמשוך אוטומטית את היחס מ־<code>weapons.json</code> (אותו אתה עורך כאדמין).
+        תמיד ניתן לשנות ידנית למטה.
+      </p>
+    </section>
+
+    <!-- יחס קובייה / קליקים -->
+    <section class="panel">
+      <h2>הגדרת קליקים לנשק הנבחר</h2>
+      <div class="grid g3">
+        <label>
+          גודל קובייה בדף (בס"מ)
+          <input type="number" id="gridSizeCm" value="1" step="0.1" min="0.1">
+        </label>
+        <label>
+          קליקים בגובה לקובייה אחת
+          <input type="number" id="elevClicksPerSquare" value="0" step="0.1" min="0">
+        </label>
+        <label>
+          קליקים בצידוד לקובייה אחת
+          <input type="number" id="windClicksPerSquare" value="0" step="0.1" min="0">
+        </label>
+      </div>
+      <p class="note">
+        אתה כמאפס יכול לערוך כאן ידנית לכל ירי. שינוי הקבועים לכל נשק/אמצעי נעשה בקובץ <code>weapons.json</code> בגיטהאב.
+      </p>
+      <div class="actions">
+        <button id="btnConfirmRatios" class="primary">אישור יחס קובייה-קליקים</button>
+      </div>
+    </section>
+
+    <!-- העלאת דף איפוס -->
+    <section class="panel">
+      <h2>צילום / העלאת דף איפוס</h2>
+      <label class="full">
+        בחר קובץ תמונה (JPG / PNG)
+        <input type="file" id="zeroingImage" accept="image/*">
+      </label>
+      <p class="note">
+        צלם את דף האיפוס מלמעלה, כמה שיותר ישר, ושמור כתמונה במכשיר. לאחר מכן בחר כאן את התמונה.
+      </p>
+
+      <div class="canvasWrap">
+        <canvas id="zeroingCanvas"></canvas>
+      </div>
+
+      <div class="toolbar">
+        <span id="modeLabel">מצב: נקודת רצויה</span>
+        <button id="btnDesiredHit">סמן נקודת פגיעה רצויה</button>
+        <button id="btnRuler">מדידת 1 ס"מ (סרגל)</button>
+        <button id="btnHits">סימון פגיעות</button>
+        <button id="btnClearHits" class="ghost">ניקוי פגיעות</button>
+      </div>
+      <p class="hint">
+        סדר פעולות מומלץ: 1️⃣ נקודת פגיעה רצויה 2️⃣ (אופציונלי) מדידת 1 ס"מ לדייק אם האוטומטי לא מדויק 3️⃣ סימון כל הפגיעות.
+      </p>
+    </section>
+
+    <!-- חישוב תוצאה ותעודה -->
+    <section class="panel">
+      <h2>חישוב תיקון, גודל מקבץ ותעודת איפוס</h2>
+      <div class="actions">
+        <button id="btnCompute" class="primary">חשב תיקון כוונת</button>
+        <p id="resultText" class="result"></p>
+      </div>
+
+      <hr>
+
+      <div class="actions">
+        <button id="btnMakeCert">צור תעודת איפוס</button>
+        <button id="btnOpenWhatsApp" class="ghost">פתח WhatsApp לשליחת התעודה</button>
+        <a id="btnDownloadCert" class="link" download="zeroing_certificate.png">
+          הורד תעודת איפוס כתמונה
+        </a>
+      </div>
+
+      <canvas id="certCanvas" width="1024" height="768" class="cert"></canvas>
+      <p class="hint">
+        לאחר הורדת התמונה ניתן לשתף אותה דרך WhatsApp (שיתוף → WhatsApp + בחירת התמונה מהגלריה).
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <small>© 2025 — נבנה ל-GitHub Pages. ללא ספריות חיצוניות. עובד ב-Chrome/Safari/Edge.</small>
+  </footer>
+  <script>
+    // ===== הגדרות ו-state =====
+    let WEAPON_RATIOS = {}; // נטען מ-weapons.json
+
+    const state = {
+      mode: 'desired',
+      image: null,
+      pixelsPerCm: null,
+      desiredHit: null,
+      ruler: [],
+      hits: [],
+      config: {
+        gridSizeCm: 1,
+        elevClicksPerSquare: 0,
+        windClicksPerSquare: 0
+      },
+      result: null,
+      overlayMsg: 'העלה תמונה כדי להתחיל'
+    };
+
+    const el = {
+      unitCompany: document.getElementById('unitCompany'),
+      unitPlatoon: document.getElementById('unitPlatoon'),
+      shooterName: document.getElementById('shooterName'),
+      weaponType: document.getElementById('weaponType'),
+      opticType: document.getElementById('opticType'),
+      gridSizeCm: document.getElementById('gridSizeCm'),
+      elevClicksPerSquare: document.getElementById('elevClicksPerSquare'),
+      windClicksPerSquare: document.getElementById('windClicksPerSquare'),
+      autoGridInfo: document.getElementById('autoGridInfo'),
+      btnConfirmRatios: document.getElementById('btnConfirmRatios'),
+      fileInput: document.getElementById('zeroingImage'),
+      canvas: document.getElementById('zeroingCanvas'),
+      modeLabel: document.getElementById('modeLabel'),
+      btnDesiredHit: document.getElementById('btnDesiredHit'),
+      btnRuler: document.getElementById('btnRuler'),
+      btnHits: document.getElementById('btnHits'),
+      btnClearHits: document.getElementById('btnClearHits'),
+      btnCompute: document.getElementById('btnCompute'),
+      resultText: document.getElementById('resultText'),
+      btnMakeCert: document.getElementById('btnMakeCert'),
+      btnDownloadCert: document.getElementById('btnDownloadCert'),
+      btnOpenWhatsApp: document.getElementById('btnOpenWhatsApp'),
+      certCanvas: document.getElementById('certCanvas')
+    };
+
+    const ctx = el.canvas.getContext('2d');
+    const certCtx = el.certCanvas.getContext('2d');
+
+    // ===== טעינת weapons.json =====
+    async function loadWeaponRatios() {
+      try {
+        const res = await fetch('weapons.json', { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        WEAPON_RATIOS = await res.json();
+        console.log('weapons.json loaded', WEAPON_RATIOS);
+      } catch (err) {
+        console.warn('לא הצלחתי לטעון weapons.json, ממשיכים עם ערכים ידניים בלבד', err);
+        WEAPON_RATIOS = {};
+      }
+    }
+
+    // ===== פונקציות עזר =====
+    function setMode(mode) {
+      state.mode = mode;
+      let label = 'מצב: ';
+      if (mode === 'desired') label += 'נקודת רצויה';
+      else if (mode === 'ruler') label += 'סרגל 1 ס"מ';
+      else if (mode === 'hits') label += 'סימון פגיעות';
+      el.modeLabel.textContent = label;
+
+      // הנחיות בזמן אמת (מוצגות גם על גבי התמונה)
+      if (!state.image) {
+        state.overlayMsg = 'העלה תמונה כדי להתחיל';
+      } else if (mode === 'desired') {
+        state.overlayMsg = 'שלב 1/3: לחץ על נקודת הפגיעה הרצויה (נקודת המכוון)';
+      } else if (mode === 'ruler') {
+        state.overlayMsg = 'שלב 2/3: (אופציונלי) דייק ידנית 1 ס״מ: לחץ שתי נקודות על קו רשת במרחק קובייה אחת';
+      } else if (mode === 'hits') {
+        state.overlayMsg = 'שלב 3/3: סמן את הפגיעות (אפשר כמה נקודות). בסוף לחץ "חשב תיקון כוונת"';
+      } else {
+        state.overlayMsg = 'בחר מצב פעולה';
+      }
+
+      draw();
+    }
+
+    function dist(a, b) {
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+      return Math.hypot(dx, dy);
+    }
+
+    function avg(points) {
+      const n = points.length;
+      if (!n) return null;
+      let sx = 0, sy = 0;
+      points.forEach(p => { sx += p.x; sy += p.y; });
+      return { x: sx / n, y: sy / n };
+    }
+
+    function pxToCm(px) {
+      if (!state.pixelsPerCm) return null;
+      return px / state.pixelsPerCm;
+    }
+
+    function cmToSquares(cm) {
+      return cm / state.config.gridSizeCm;
+    }
+
+    function applyRatiosFromInputs() {
+      state.config.gridSizeCm = parseFloat(el.gridSizeCm.value) || 1;
+      state.config.elevClicksPerSquare = parseFloat(el.elevClicksPerSquare.value) || 0;
+      state.config.windClicksPerSquare = parseFloat(el.windClicksPerSquare.value) || 0;
+    }
+
+    function updateRatiosFromWeapon() {
+      const weapon = el.weaponType.value;
+      const optic = el.opticType.value;
+      if (!weapon || !optic) return;
+
+      const weaponCfg = WEAPON_RATIOS[weapon];
+      if (!weaponCfg) return;
+      const opticCfg = weaponCfg[optic];
+      if (!opticCfg) return;
+
+      el.elevClicksPerSquare.value = opticCfg.elevClicksPerSquare ?? 0;
+      el.windClicksPerSquare.value = opticCfg.windClicksPerSquare ?? 0;
+      applyRatiosFromInputs();
+    }
+
+    // ===== ציור =====
+    function clearCanvas() {
+      ctx.clearRect(0, 0, el.canvas.width, el.canvas.height);
+    }
+
+    function draw() {
+      clearCanvas();
+      if (!state.image) return;
+
+      ctx.drawImage(state.image, 0, 0, el.canvas.width, el.canvas.height);
+
+      if (state.desiredHit) {
+        drawCross(state.desiredHit.x, state.desiredHit.y, '#22c55e');
+        drawCircle(state.desiredHit.x, state.desiredHit.y, 14, '#22c55e');
+        label(state.desiredHit.x + 6, state.desiredHit.y - 10, 'רצוי', '#22c55e');
+      
+      
+      // פס הנחיות בתחתית התמונה
+      drawOverlayBar(state.overlayMsg || '');
+    }
+
+      if (state.ruler.length === 2) {
+        const [a, b] = state.ruler;
+        drawLine(a, b, '#38bdf8');
+        drawCircle(a.x, a.y, 7, '#38bdf8');
+        drawCircle(b.x, b.y, 7, '#38bdf8');
+        const d = dist(a, b);
+        label((a.x + b.x) / 2, (a.y + b.y) / 2 - 12,
+          `1 ס"מ (${d.toFixed(1)}px)`, '#38bdf8');
+      } else if (state.ruler.length === 1) {
+        drawCircle(state.ruler[0].x, state.ruler[0].y, 7, '#38bdf8');
+      }
+
+      if (state.hits.length) {
+        state.hits.forEach(p => drawCircle(p.x, p.y, 12, '#ef4444'));
+        const c = avg(state.hits);
+        if (c) {
+          drawCross(c.x, c.y, '#ef4444');
+          label(c.x + 6, c.y - 10, 'מרכז קבוצה', '#ef4444');
+        }
+      }
+    }
+
+    function drawCircle(x, y, r, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    function drawCross(x, y, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 6;
+      const size = 14;
+      ctx.beginPath();
+      ctx.moveTo(x - size, y);
+      ctx.lineTo(x + size, y);
+      ctx.moveTo(x, y - size);
+      ctx.lineTo(x, y + size);
+      ctx.stroke();
+    }
+
+    function drawLine(a, b, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+
+    function label(x, y, text, color) {
+      ctx.fillStyle = color;
+      ctx.font = 'bold 13px system-ui';
+      ctx.textAlign = 'left';
+      ctx.fillText(text, x, y);
+    }
+
+    // ===== אירועים =====
+    el.weaponType.addEventListener('change', updateRatiosFromWeapon);
+    el.opticType.addEventListener('change', updateRatiosFromWeapon);
+
+    el.btnConfirmRatios.addEventListener('click', () => {
+      applyRatiosFromInputs();
+      alert('יחס קובייה-קליקים עודכן.');
+    });
+
+    el.fileInput.addEventListener('change', (ev) => {
+      const file = ev.target.files[0];
+      if (!file) return;
+
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        state.image = img;
+        const maxW = 1600;
+        const maxH = 1200;
+        let w = img.width;
+        let h = img.height;
+        const scale = Math.min(maxW / w, maxH / h, 1);
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
+
+        el.canvas.width = w;
+        el.canvas.height = h;
+
+        // זיהוי קובייה אוטומטי (אם יש רשת)
+        state.pixelsPerCm = null;
+        el.autoGridInfo.value = 'מזהה…';
+        const g = detectGridPxFromImage(img);
+        if (g && isFinite(g.px) && g.px > 0) {
+          state.pixelsPerCm = g.px; // זה פיקסלים ל-1 ס״מ (קובייה), בהנחה שהקובייה היא 1 ס״מ בדף
+          el.autoGridInfo.value = `אוטומטי: ~${g.px.toFixed(1)}px (X ${g.pxX.toFixed(1)} / Y ${g.pxY.toFixed(1)})`;
+        } else {
+          el.autoGridInfo.value = 'לא זוהתה רשת בביטחון (אפשר לדייק ידנית)';
+        }
+
+        // איפוס מצב עבודה
+        state.desiredHit = null;
+        state.ruler = [];
+        state.hits = [];
+        setMode('desired');
+
+        draw();
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    });
+
+    el.btnDesiredHit.addEventListener('click', () => setMode('desired'));
+    el.btnRuler.addEventListener('click', () => {
+      state.ruler = [];
+      // מדידה ידנית תדרוס את האוטומטי
+      state.pixelsPerCm = null;
+      el.autoGridInfo.value = 'ידני: בחר 2 נקודות…';
+      setMode('ruler');
+    });
+    el.btnHits.addEventListener('click', () => setMode('hits'));
+    el.btnClearHits.addEventListener('click', () => {
+      state.hits = [];
+      state.overlayMsg = 'הפגיעות נוקו. סמן מחדש או חשב.';
+      draw();
+    });
+
+    // קליק / טאץ' מדויק על הקנבס
+    el.canvas.addEventListener('click', handleCanvasClick);
+
+    function handleCanvasClick(ev) {
+      if (!state.image) return;
+      const rect = el.canvas.getBoundingClientRect();
+      const scaleX = el.canvas.width / rect.width;
+      const scaleY = el.canvas.height / rect.height;
+      const x = (ev.clientX - rect.left) * scaleX;
+      const y = (ev.clientY - rect.top) * scaleY;
+
+      if (state.mode === 'desired') {
+        state.desiredHit = { x, y };
+        state.overlayMsg = 'נקודת מכוון נקלטה. כעת סמן פגיעות (או דייק קובייה ידנית אם צריך).';
+      } else if (state.mode === 'ruler') {
+        state.ruler.push({ x, y });
+        if (state.ruler.length > 2) {
+          state.ruler = state.ruler.slice(-2);
+        }
+        if (state.ruler.length === 2) {
+          const dpx = dist(state.ruler[0], state.ruler[1]);
+          state.pixelsPerCm = dpx; // שתי הנקודות = 1 ס"מ
+          el.autoGridInfo.value = `ידני: 1 ס"מ ≈ ${dpx.toFixed(1)}px`;
+          state.overlayMsg = 'קובייה עודכנה ידנית. אפשר להמשיך לסימון פגיעות / חישוב.';
+        }
+      } else if (state.mode === 'hits') {
+        state.hits.push({ x, y });
+        state.overlayMsg = `פגיעות: ${state.hits.length}. אפשר להוסיף עוד או ללחוץ "חשב תיקון כוונת"`;
+      }
+
+      draw();
+    }
+
+    // חישוב תיקון + גודל מקבץ
+    el.btnCompute.addEventListener('click', () => {
+      if (!state.desiredHit) {
+        alert('יש לסמן נקודת פגיעה רצויה.');
+        return;
+      }
+      if (state.hits.length === 0) {
+        alert('יש לסמן לפחות פגיעה אחת.');
+        return;
+      }
+      if (!state.pixelsPerCm) {
+        alert('לא זוהתה קובייה אוטומטית ולא בוצעה מדידה ידנית. לחץ "מדידת 1 ס"מ (סרגל)" כדי לדייק.');
+        return;
+      }
+
+      applyRatiosFromInputs();
+
+      const center = avg(state.hits);
+      const dxPx = center.x - state.desiredHit.x;
+      const dyPx = center.y - state.desiredHit.y;
+
+      const dxCm = pxToCm(dxPx);
+      const dyCm = pxToCm(dyPx);
+
+      const dxSquares = cmToSquares(Math.abs(dxCm));
+      const dySquares = cmToSquares(Math.abs(dyCm));
+
+      const elevClicks = Math.round(dySquares * state.config.elevClicksPerSquare);
+      const windClicks = Math.round(dxSquares * state.config.windClicksPerSquare);
+
+      // ✅ כיוון התיקון הוא הפוך לכיוון הסטייה
+      const correctionHorizDir =
+        dxCm > 0 ? 'שמאלה' :
+        dxCm < 0 ? 'ימינה' : '—';
+
+      const correctionVertDir =
+        dyCm > 0 ? 'מעלה'  :   // הפגיעה מתחת -> מתקנים מעלה
+        dyCm < 0 ? 'מטה'   :   // הפגיעה מעל -> מתקנים מטה
+        '—';
+
+      // גודל מקבץ: המרחק הכי גדול בין שתי פגיעות
+      let maxDistPx = 0;
+      for (let i = 0; i < state.hits.length; i++) {
+        for (let j = i + 1; j < state.hits.length; j++) {
+          const d = dist(state.hits[i], state.hits[j]);
+          if (d > maxDistPx) maxDistPx = d;
+        }
+      }
+      const groupSizeCm = maxDistPx ? pxToCm(maxDistPx) : 0;
+      const groupSizeSquares = groupSizeCm ? cmToSquares(groupSizeCm) : 0;
+
+      state.result = {
+        dxCm, dyCm,
+        elevClicks, windClicks,
+        correctionHorizDir, correctionVertDir,
+        groupSizeCm, groupSizeSquares
+      };
+
+      const groupText = groupSizeCm
+        ? ` | גודל מקבץ ≈ ${groupSizeCm.toFixed(1)} ס"מ (${groupSizeSquares.toFixed(1)} קוביות)`
+        : '';
+
+      state.overlayMsg = 'חישוב הושלם. אפשר ליצור תעודה או לתקן סימונים.';
+      el.resultText.textContent =
+        `תיקון: צידוד ${windClicks} קליקים ${correctionHorizDir} | ` +
+        `גובה ${elevClicks} קליקים ${correctionVertDir}` + groupText;
+    });
+
+    // ===== תעודת איפוס =====
+    function drawCertificate() {
+      const c = el.certCanvas;
+      const ctx2 = certCtx;
+      ctx2.clearRect(0, 0, c.width, c.height);
+
+      ctx2.fillStyle = '#020617';
+      ctx2.fillRect(0, 0, c.width, c.height);
+      ctx2.strokeStyle = '#374151';
+      ctx2.lineWidth = 4;
+      ctx2.strokeRect(20, 20, c.width - 40, c.height - 40);
+
+      ctx2.fillStyle = '#e5e7eb';
+      ctx2.font = 'bold 40px system-ui';
+      ctx2.textAlign = 'center';
+      ctx2.fillText('תעודת איפוס', c.width / 2, 80);
+
+      ctx2.textAlign = 'left';
+      ctx2.font = '16px system-ui';
+      const ts = new Date().toLocaleString('he-IL');
+      ctx2.fillText(`תאריך/שעה: ${ts}`, 60, 120);
+      ctx2.fillText(`פלוגה: ${el.unitCompany.value || '—'} | מחלקה: ${el.unitPlatoon.value || '—'}`, 60, 150);
+      ctx2.fillText(`שם המאפס/היורה: ${el.shooterName.value || '—'}`, 60, 180);
+
+      const selectedWeapon = el.weaponType.options[el.weaponType.selectedIndex];
+      const selectedOptic = el.opticType.options[el.opticType.selectedIndex];
+      const weaponLabel = selectedWeapon && selectedWeapon.textContent ? selectedWeapon.textContent : '—';
+      const opticLabel = selectedOptic && selectedOptic.textContent ? selectedOptic.textContent : '—';
+      ctx2.fillText(`נשק: ${weaponLabel} | אמצעי: ${opticLabel}`, 60, 210);
+
+      if (state.result) {
+        const {
+          elevClicks, windClicks,
+          correctionHorizDir, correctionVertDir,
+          groupSizeCm, groupSizeSquares,
+          dxCm, dyCm
+        } = state.result;
+
+        ctx2.fillText(
+          `תיקון כוונת: צידוד ${windClicks} קליקים ${correctionHorizDir}, גובה ${elevClicks} קליקים ${correctionVertDir}`,
+          60, 240
+        );
+
+        if (groupSizeCm) {
+          ctx2.fillText(
+            `גודל מקבץ: ≈ ${groupSizeCm.toFixed(1)} ס"מ (${groupSizeSquares.toFixed(1)} קוביות)`,
+            60, 270
+          );
+        }
+
+        // ✅ תנאי "הנשק אופס בהצלחה"
+        if (groupSizeCm) {
+          const radialErrorCm = Math.sqrt(dxCm * dxCm + dyCm * dyCm);
+          if (groupSizeCm < 5 && Math.abs(radialErrorCm) < 2) {
+            ctx2.fillStyle = '#22c55e';
+            ctx2.fillText(
+              'הנשק אופס בהצלחה (מקבץ < 5 ס"מ וסטייה < 2 ס"מ מנקודת המכוון)',
+              60, 300
+            );
+            ctx2.fillStyle = '#e5e7eb';
+          }
+        }
+      }
+
+      // צילום דף איפוס ממוזער
+      if (el.canvas.width && el.canvas.height) {
+        const thumbW = 320;
+        const ratio = el.canvas.height / el.canvas.width;
+        const thumbH = thumbW * ratio;
+
+        ctx2.drawImage(
+          el.canvas,
+          0, 0, el.canvas.width, el.canvas.height,
+          c.width - thumbW - 60, 130, thumbW, thumbH
+        );
+
+        ctx2.strokeStyle = '#374151';
+        ctx2.strokeRect(c.width - thumbW - 60, 130, thumbW, thumbH);
+        ctx2.fillStyle = '#94a3b8';
+        ctx2.font = '14px system-ui';
+        ctx2.fillText('צילום דף איפוס (ממוזער)', c.width - thumbW - 60, 120);
+      }
+    }
+
+    el.btnMakeCert.addEventListener('click', () => {
+      drawCertificate();
+      const dataURL = el.certCanvas.toDataURL('image/png');
+      el.btnDownloadCert.href = dataURL;
+      alert('התעודה נוצרה. הורד את התמונה לשמירה/שיתוף.');
+    });
+
+    // וואטסאפ – ⚠ אי אפשר לצרף קובץ אוטומטית מהדפדפן, רק לפתוח הודעה עם טקסט
+    el.btnOpenWhatsApp.addEventListener('click', () => {
+      const msg = encodeURIComponent(
+        'תעודת איפוס נוצרה. שמור את תמונת התעודה והתמונה מהדף כקובצי תמונה, ' +
+        'ולאחר מכן צרף אותם ידנית מתוך הגלריה להודעת ה-WhatsApp.'
+      );
+      window.open(`https://wa.me/?text=${msg}`, '_blank');
+    });
+
+    
+
+    // ===== זיהוי קובייה אוטומטי (רשת) =====
+    // מחזיר פיקסלים ל-1 קובייה (שהיא gridSizeCm ס"מ) על הקנבס.
+    function detectGridPxFromImage(img) {
+      try {
+        // דוגמים גרסה מוקטנת
+        const maxW = 900;
+        const s = Math.min(maxW / img.width, 1);
+        const w = Math.max(320, Math.round(img.width * s));
+        const h = Math.round(img.height * s);
+
+        const off = document.createElement('canvas');
+        off.width = w; off.height = h;
+        const ox = off.getContext('2d', { willReadFrequently: true });
+        ox.drawImage(img, 0, 0, w, h);
+        const data = ox.getImageData(0, 0, w, h).data;
+
+        // ROI: אזור ימין-אמצע (בדרך כלל נקי מהטבעת ומהטבלה התחתונה)
+        const rx0 = Math.floor(w * 0.60), rx1 = Math.floor(w * 0.94);
+        const ry0 = Math.floor(h * 0.20), ry1 = Math.floor(h * 0.62);
+
+        const gray = new Uint8Array(w * h);
+        for (let i = 0, p = 0; i < w * h; i++, p += 4) {
+          gray[i] = (data[p] * 0.299 + data[p + 1] * 0.587 + data[p + 2] * 0.114) | 0;
+        }
+        const idx = (x, y) => y * w + x;
+
+        const projX = new Float64Array(rx1 - rx0);
+        const projY = new Float64Array(ry1 - ry0);
+
+        for (let y = ry0 + 1; y < ry1 - 1; y++) {
+          for (let x = rx0 + 1; x < rx1 - 1; x++) {
+            const gx =
+              -gray[idx(x - 1, y - 1)] + gray[idx(x + 1, y - 1)] +
+              -2 * gray[idx(x - 1, y)] + 2 * gray[idx(x + 1, y)] +
+              -gray[idx(x - 1, y + 1)] + gray[idx(x + 1, y + 1)];
+            const gy =
+              -gray[idx(x - 1, y - 1)] - 2 * gray[idx(x, y - 1)] - gray[idx(x + 1, y - 1)] +
+              gray[idx(x - 1, y + 1)] + 2 * gray[idx(x, y + 1)] + gray[idx(x + 1, y + 1)];
+            const mag = Math.abs(gx) + Math.abs(gy);
+            projX[x - rx0] += mag;
+            projY[y - ry0] += mag;
+          }
+        }
+
+        const pxX = estimatePeriodFromPeaks(projX);
+        const pxY = estimatePeriodFromPeaks(projY);
+        if (!pxX || !pxY) return null;
+
+        const px = (pxX + pxY) / 2;
+        if (!isFinite(px) || px < 8 || px > 220) return null;
+
+        // המרה לפיקסלים על הקנבס
+        const s2 = el.canvas.width / img.width; // original -> canvas
+        const pxOnCanvas = px * (s2 / s);
+
+        return { px: pxOnCanvas, pxX: pxX * (s2 / s), pxY: pxY * (s2 / s) };
+      } catch (e) {
+        console.warn('Grid detect failed', e);
+        return null;
+      }
+    }
+
+    function estimatePeriodFromPeaks(signal) {
+      const n = signal.length;
+      if (n < 80) return null;
+
+      let mean = 0;
+      for (let i = 0; i < n; i++) mean += signal[i];
+      mean /= n;
+
+      const s = new Float64Array(n);
+      for (let i = 0; i < n; i++) s[i] = Math.max(0, signal[i] - mean);
+
+      // smoothing
+      const win = 9;
+      const sm = new Float64Array(n);
+      let acc = 0;
+      for (let i = 0; i < n; i++) {
+        acc += s[i];
+        if (i >= win) acc -= s[i - win];
+        sm[i] = acc / Math.min(i + 1, win);
+      }
+
+      let maxv = 0;
+      for (let i = 0; i < n; i++) if (sm[i] > maxv) maxv = sm[i];
+      if (maxv <= 0) return null;
+      const thr = maxv * 0.55;
+
+      const peaks = [];
+      for (let i = 2; i < n - 2; i++) {
+        if (sm[i] > thr && sm[i] > sm[i - 1] && sm[i] > sm[i + 1]) {
+          if (peaks.length && i - peaks[peaks.length - 1] < 6) continue;
+          peaks.push(i);
+        }
+      }
+      if (peaks.length < 6) return null;
+
+      const dists = [];
+      for (let i = 1; i < peaks.length; i++) {
+        const d = peaks[i] - peaks[i - 1];
+        if (d >= 8 && d <= 220) dists.push(d);
+      }
+      if (dists.length < 5) return null;
+
+      dists.sort((a, b) => a - b);
+      const mid = Math.floor(dists.length / 2);
+      const med = dists.length % 2 ? dists[mid] : (dists[mid - 1] + dists[mid]) / 2;
+
+      const q1 = dists[Math.floor(dists.length * 0.25)];
+      const q3 = dists[Math.floor(dists.length * 0.75)];
+      if ((q3 - q1) > med * 0.35) return null;
+
+      return med;
+    }
+
+    // אתחול
+    applyRatiosFromInputs();
+    setMode('desired');
+    loadWeaponRatios();
+  </script>
+</body>
+</html>
+
