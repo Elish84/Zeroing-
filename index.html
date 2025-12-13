@@ -464,12 +464,12 @@
 
     function classifyZeroing(groupSizeCm, correctionCm) {
       if (groupSizeCm < 5 && correctionCm < 1) {
-        return { code: 'EXCELLENT', text: 'הנשק מאופס מצוין' };
+        return { code: 'EXCELLENT', text: 'נשק מאופס' };
       }
       if (groupSizeCm < 5 && correctionCm > 1 && correctionCm < 4) {
-        return { code: 'ADJUST_ONLY', text: 'נדרש תיקון קליקים בלבד (אין צורך במקצה נוסף)' };
+        return { code: 'ADJUST_ONLY', text: 'נדרש תיקון ללא מקצה נוסף' };
       }
-      return { code: 'NEED_ANOTHER_ROUND', text: 'נדרש מקצה איפוס נוסף' };
+      return { code: 'NEED_ANOTHER_ROUND', text: 'נדרש מקצה נוסף' };
     }
 
 
@@ -759,41 +759,88 @@
 
     // ===== תעודת איפוס =====
     function drawCertificate() {
-      const c = el.certCanvas;
-      const ctx2 = certCtx;
-      ctx2.clearRect(0, 0, c.width, c.height);
+      if (!state.image || !state.result) return;
 
-      ctx2.fillStyle = '#020617';
-      ctx2.fillRect(0, 0, c.width, c.height);
-      ctx2.strokeStyle = '#374151';
-      ctx2.lineWidth = 4;
-      ctx2.strokeRect(20, 20, c.width - 40, c.height - 40);
+      const img = state.image;
+
+      // Canvas size: match displayed canvas size for consistency
+      el.certCanvas.width = el.canvas.width;
+      el.certCanvas.height = el.canvas.height;
+      const ctx2 = el.certCanvas.getContext('2d');
+
+      // Draw base image + current markings
+      ctx2.drawImage(img, 0, 0, el.certCanvas.width, el.certCanvas.height);
+      ctx2.drawImage(el.canvas, 0, 0);
+
+      // Gather details
+      const shooter = (el.shooterName?.value || '').trim() || '—';
+      const company = (el.company?.value || '').trim() || '—';
+      const platoon = (el.platoon?.value || '').trim() || '—';
+      const squad = (el.squad?.value || '').trim() || '—';
+      const weaponName = (el.weaponSelect?.selectedOptions?.[0]?.textContent || '').trim() || '—';
+
+      const dt = new Date();
+      const dateStr = dt.toLocaleDateString('he-IL');
+      const timeStr = dt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+
+      const groupCm = state.result.groupSizeCm;
+      const radial = state.result.radialErrorCm;
+      const status = state.result.status;
+
+      const statusColor =
+        status.code === 'EXCELLENT' ? '#22c55e' :
+        status.code === 'ADJUST_ONLY' ? '#38bdf8' :
+        '#ef4444';
+
+      // Bottom overlay panel (readable on white/black)
+      const pad = 14;
+      const panelH = 150;
+      const y0 = el.certCanvas.height - panelH;
+
+      ctx2.save();
+      ctx2.globalAlpha = 0.86;
+      ctx2.fillStyle = '#0b1220';
+      ctx2.fillRect(0, y0, el.certCanvas.width, panelH);
+      ctx2.globalAlpha = 1;
+      ctx2.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx2.lineWidth = 2;
+      ctx2.strokeRect(0, y0, el.certCanvas.width, panelH);
 
       ctx2.fillStyle = '#e5e7eb';
-      ctx2.font = 'bold 40px system-ui';
-      ctx2.textAlign = 'center';
-      ctx2.fillText('תעודת איפוס', c.width / 2, 80);
+      ctx2.textAlign = 'right';
+      ctx2.textBaseline = 'top';
 
-      ctx2.textAlign = 'left';
-      ctx2.font = '16px system-ui';
-      const ts = new Date().toLocaleString('he-IL');
-      ctx2.fillText(`תאריך/שעה: ${ts}`, 60, 120);
-      ctx2.fillText(`פלוגה: ${el.unitCompany.value || '—'} | מחלקה: ${el.unitPlatoon.value || '—'}`, 60, 150);
-      ctx2.fillText(`שם המאפס/היורה: ${el.shooterName.value || '—'}`, 60, 180);
+      // Title
+      ctx2.font = 'bold 18px system-ui';
+      ctx2.fillText('תעודת איפוס — צמ״מ 8109', el.certCanvas.width - pad, y0 + 10);
 
-      const selectedWeapon = el.weaponType.options[el.weaponType.selectedIndex];
-      const selectedOptic = el.opticType.options[el.opticType.selectedIndex];
-      const weaponLabel = selectedWeapon && selectedWeapon.textContent ? selectedWeapon.textContent : '—';
-      const opticLabel = selectedOptic && selectedOptic.textContent ? selectedOptic.textContent : '—';
-      ctx2.fillText(`נשק: ${weaponLabel} | אמצעי: ${opticLabel}`, 60, 210);
+      // Details
+      ctx2.font = '15px system-ui';
+      const baseY = y0 + 42;
+      const lh = 22;
 
-      if (state.result) {
-        const {
-          elevClicks, windClicks,
-          correctionHorizDir, correctionVertDir,
-          groupSizeCm, groupSizeSquares,
-          dxCm, dyCm
-        } = state.result;
+      ctx2.fillText(`יורה: ${shooter} | מסגרת: ${company} | פלוגה: ${platoon} | מחלקה: ${squad}`, el.certCanvas.width - pad, baseY + 0*lh);
+      ctx2.fillText(`תאריך: ${dateStr}  שעה: ${timeStr} | נשק: ${weaponName}`, el.certCanvas.width - pad, baseY + 1*lh);
+      ctx2.fillText(`גודל מקבץ: ${isFinite(groupCm)?groupCm.toFixed(2):'—'} ס״מ | סטיית מרכז: ${isFinite(radial)?radial.toFixed(2):'—'} ס״מ`, el.certCanvas.width - pad, baseY + 2*lh);
+
+      // Status line (always)
+      ctx2.font = 'bold 18px system-ui';
+      ctx2.fillStyle = statusColor;
+      ctx2.fillText(`סטטוס איפוס: ${status.text}`, el.certCanvas.width - pad, y0 + 110);
+
+      // If correction required (both adjust-only and another round)
+      if (status.code !== 'EXCELLENT') {
+        ctx2.font = 'bold 14px system-ui';
+        ctx2.fillStyle = '#e5e7eb';
+        ctx2.fillText(
+          `נדרש תיקון: צידוד ${state.result.windClicks} קליקים ${state.result.correctionHorizDir} , גובה ${state.result.elevClicks} קליקים ${state.result.correctionVertDir}`,
+          el.certCanvas.width - pad,
+          y0 + 134
+        );
+      }
+
+      ctx2.restore();
+    } = state.result;
 
         ctx2.fillText(
           `תיקון כוונת: צידוד ${windClicks} קליקים ${correctionHorizDir}, גובה ${elevClicks} קליקים ${correctionVertDir}`,
