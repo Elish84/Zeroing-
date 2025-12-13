@@ -195,7 +195,13 @@
       color: var(--muted);
       font-size: 12px;
     }
-  </style>
+  
+    .status-excellent{color:#22c55e;font-weight:900;font-size:18px}
+    .status-adjust{color:#38bdf8;font-weight:900;font-size:18px}
+    .status-repeat{color:#ef4444;font-weight:900;font-size:18px}
+    .status-sub{font-size:14px;font-weight:700;margin-top:6px}
+    
+</style>
 </head>
 <body>
   <header>
@@ -207,7 +213,7 @@
     <!-- פרטי מסגרת + פרטי מאפס -->
     <section class="panel">
       <h2>פרטי מסגרת ומאפס</h2>
-      <div class="grid g2">
+      <div class="grid g3">
         <label>
           פלוגה
           <select id="unitCompany">
@@ -274,6 +280,11 @@
           גודל קובייה בדף (בס"מ)
           <input type="number" id="gridSizeCm" value="1" step="0.1" min="0.1">
         </label>
+
+        <label>
+          זיהוי קובייה אוטומטי (פיקסלים ל־1 ס״מ)
+          <input type="text" id="autoGridInfo" value="—" readonly>
+        </label>
         <label>
           קליקים בגובה לקובייה אחת
           <input type="number" id="elevClicksPerSquare" value="0" step="0.1" min="0">
@@ -314,7 +325,7 @@
         <button id="btnClearHits" class="ghost">ניקוי פגיעות</button>
       </div>
       <p class="hint">
-        סדר פעולות מומלץ: 1️⃣ נקודת פגיעה רצויה 2️⃣ (אופציונלי) מדידת 1 ס"מ לדייק אם האוטומטי לא מדויק 3️⃣ סימון כל הפגיעות.
+        סדר פעולות מומלץ: 1️⃣ נקודת מכוון 2️⃣ (אוטומטי) זיהוי קובייה / או מדידה ידנית 3️⃣ סימון פגיעות.
       </p>
     </section>
 
@@ -362,7 +373,8 @@
         elevClicksPerSquare: 0,
         windClicksPerSquare: 0
       },
-      result: null,
+      result: null
+   ,
       overlayMsg: 'העלה תמונה כדי להתחיל'
     };
 
@@ -373,9 +385,9 @@
       weaponType: document.getElementById('weaponType'),
       opticType: document.getElementById('opticType'),
       gridSizeCm: document.getElementById('gridSizeCm'),
+      autoGridInfo: document.getElementById('autoGridInfo'),
       elevClicksPerSquare: document.getElementById('elevClicksPerSquare'),
       windClicksPerSquare: document.getElementById('windClicksPerSquare'),
-      autoGridInfo: document.getElementById('autoGridInfo'),
       btnConfirmRatios: document.getElementById('btnConfirmRatios'),
       fileInput: document.getElementById('zeroingImage'),
       canvas: document.getElementById('zeroingCanvas'),
@@ -416,20 +428,6 @@
       else if (mode === 'ruler') label += 'סרגל 1 ס"מ';
       else if (mode === 'hits') label += 'סימון פגיעות';
       el.modeLabel.textContent = label;
-
-      // הנחיות בזמן אמת (מוצגות גם על גבי התמונה)
-      if (!state.image) {
-        state.overlayMsg = 'העלה תמונה כדי להתחיל';
-      } else if (mode === 'desired') {
-        state.overlayMsg = 'שלב 1/3: לחץ על נקודת הפגיעה הרצויה (נקודת המכוון)';
-      } else if (mode === 'ruler') {
-        state.overlayMsg = 'שלב 2/3: (אופציונלי) דייק ידנית 1 ס״מ: לחץ שתי נקודות על קו רשת במרחק קובייה אחת';
-      } else if (mode === 'hits') {
-        state.overlayMsg = 'שלב 3/3: סמן את הפגיעות (אפשר כמה נקודות). בסוף לחץ "חשב תיקון כוונת"';
-      } else {
-        state.overlayMsg = 'בחר מצב פעולה';
-      }
-
       draw();
     }
 
@@ -455,6 +453,21 @@
     function cmToSquares(cm) {
       return cm / state.config.gridSizeCm;
     }
+
+    function classifyZeroing(groupSizeCm, correctionCm) {
+      // Rules:
+      // 1) group < 5cm AND correction < 1cm => excellent zeroed
+      // 2) group < 5cm AND 1cm < correction < 4cm => apply clicks, no extra round needed (will be zeroed)
+      // 3) else => additional zeroing round needed
+      if (groupSizeCm < 5 && correctionCm < 1) {
+        return { code: 'EXCELLENT', text: 'סטטוס: הנשק מאופס מצוין (מקבץ < 5 ס״מ ותיקון < 1 ס״מ)' };
+      }
+      if (groupSizeCm < 5 && correctionCm > 1 && correctionCm < 4) {
+        return { code: 'ADJUST_ONLY', text: 'סטטוס: נדרש תיקון קליקים בלבד (אין צורך במקצה נוסף) — לאחר התיקון הנשק יהיה מאופס' };
+      }
+      return { code: 'NEED_ANOTHER_ROUND', text: 'סטטוס: נדרש מקצה איפוס נוסף' };
+    }
+
 
     function applyRatiosFromInputs() {
       state.config.gridSizeCm = parseFloat(el.gridSizeCm.value) || 1;
@@ -490,11 +503,9 @@
 
       if (state.desiredHit) {
         drawCross(state.desiredHit.x, state.desiredHit.y, '#22c55e');
-        drawCircle(state.desiredHit.x, state.desiredHit.y, 14, '#22c55e');
         label(state.desiredHit.x + 6, state.desiredHit.y - 10, 'רצוי', '#22c55e');
       
-      
-      // פס הנחיות בתחתית התמונה
+
       drawOverlayBar(state.overlayMsg || '');
     }
 
@@ -511,7 +522,7 @@
       }
 
       if (state.hits.length) {
-        state.hits.forEach(p => drawCircle(p.x, p.y, 12, '#ef4444'));
+        state.hits.forEach(p => drawCircle(p.x, p.y, 8, '#ef4444'));
         const c = avg(state.hits);
         if (c) {
           drawCross(c.x, c.y, '#ef4444');
@@ -522,7 +533,7 @@
 
     function drawCircle(x, y, r, color) {
       ctx.strokeStyle = color;
-      ctx.lineWidth = 5;
+      ctx.lineWidth = 6;
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
       ctx.stroke();
@@ -556,6 +567,27 @@
       ctx.fillText(text, x, y);
     }
 
+    function drawOverlayBar(text) {
+      if (!text) return;
+      const h = 44;
+      const pad = 10;
+      ctx.save();
+      ctx.globalAlpha = 0.88;
+      ctx.fillStyle = '#0b1220';
+      ctx.fillRect(0, el.canvas.height - h, el.canvas.width, h);
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(0, el.canvas.height - h, el.canvas.width, h);
+
+      ctx.fillStyle = '#e5e7eb';
+      ctx.font = 'bold 15px system-ui';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, el.canvas.width - pad, el.canvas.height - h/2);
+      ctx.restore();
+    }
+
     // ===== אירועים =====
     el.weaponType.addEventListener('change', updateRatiosFromWeapon);
     el.opticType.addEventListener('change', updateRatiosFromWeapon);
@@ -571,7 +603,7 @@
 
       const url = URL.createObjectURL(file);
       const img = new Image();
-      img.onload = () => {
+      img.onload = async () => {
         state.image = img;
         const maxW = 1600;
         const maxH = 1200;
@@ -584,22 +616,30 @@
         el.canvas.width = w;
         el.canvas.height = h;
 
-        // זיהוי קובייה אוטומטי (אם יש רשת)
+
+        // זיהוי קובייה אוטומטי (לא חוסם – timeout 4 שניות)
         state.pixelsPerCm = null;
-        el.autoGridInfo.value = 'מזהה…';
-        const g = detectGridPxFromImage(img);
-        if (g && isFinite(g.px) && g.px > 0) {
-          state.pixelsPerCm = g.px; // זה פיקסלים ל-1 ס״מ (קובייה), בהנחה שהקובייה היא 1 ס״מ בדף
-          el.autoGridInfo.value = `אוטומטי: ~${g.px.toFixed(1)}px (X ${g.pxX.toFixed(1)} / Y ${g.pxY.toFixed(1)})`;
+        if (el.autoGridInfo) el.autoGridInfo.value = 'מזהה…';
+        let g = null;
+        try {
+          g = await runAutoGridWithTimeout(img, 4000);
+        } catch (e) { g = null; }
+        if (g && g.timeout) {
+          if (el.autoGridInfo) el.autoGridInfo.value = 'זיהוי קובייה אוטומטי לא הצליח תוך 4 שניות. אפשר להמשיך ידנית עם סרגל.';
+        } else if (g && isFinite(g.px) && g.px > 0) {
+          state.pixelsPerCm = g.px;
+          if (el.autoGridInfo) el.autoGridInfo.value = `אוטומטי: ~${g.px.toFixed(1)}px (X ${g.pxX.toFixed(1)} / Y ${g.pxY.toFixed(1)})` + (g.lowConfidence ? ' — אמינות נמוכה, מומלץ לדייק ידנית' : '');
         } else {
-          el.autoGridInfo.value = 'לא זוהתה רשת בביטחון (אפשר לדייק ידנית)';
+          if (el.autoGridInfo) el.autoGridInfo.value = 'לא זוהתה רשת בביטחון. אפשר להמשיך ידנית עם סרגל.';
         }
 
-        // איפוס מצב עבודה
+        // איפוס מצב עבודה והצגה מידית
         state.desiredHit = null;
         state.ruler = [];
         state.hits = [];
+        state.overlayMsg = 'תמונה נטענה. שלב 1/3: לחץ על נקודת המכוון.';
         setMode('desired');
+
 
         draw();
         URL.revokeObjectURL(url);
@@ -610,15 +650,12 @@
     el.btnDesiredHit.addEventListener('click', () => setMode('desired'));
     el.btnRuler.addEventListener('click', () => {
       state.ruler = [];
-      // מדידה ידנית תדרוס את האוטומטי
       state.pixelsPerCm = null;
-      el.autoGridInfo.value = 'ידני: בחר 2 נקודות…';
       setMode('ruler');
     });
     el.btnHits.addEventListener('click', () => setMode('hits'));
     el.btnClearHits.addEventListener('click', () => {
       state.hits = [];
-      state.overlayMsg = 'הפגיעות נוקו. סמן מחדש או חשב.';
       draw();
     });
 
@@ -635,7 +672,9 @@
 
       if (state.mode === 'desired') {
         state.desiredHit = { x, y };
-        state.overlayMsg = 'נקודת מכוון נקלטה. כעת סמן פגיעות (או דייק קובייה ידנית אם צריך).';
+        state.overlayMsg = 'שלב 3/3: סמן את הפגיעות ואז לחץ "חשב תיקון כוונת"';
+        setMode('hits');
+        return;
       } else if (state.mode === 'ruler') {
         state.ruler.push({ x, y });
         if (state.ruler.length > 2) {
@@ -644,12 +683,9 @@
         if (state.ruler.length === 2) {
           const dpx = dist(state.ruler[0], state.ruler[1]);
           state.pixelsPerCm = dpx; // שתי הנקודות = 1 ס"מ
-          el.autoGridInfo.value = `ידני: 1 ס"מ ≈ ${dpx.toFixed(1)}px`;
-          state.overlayMsg = 'קובייה עודכנה ידנית. אפשר להמשיך לסימון פגיעות / חישוב.';
         }
       } else if (state.mode === 'hits') {
         state.hits.push({ x, y });
-        state.overlayMsg = `פגיעות: ${state.hits.length}. אפשר להוסיף עוד או ללחוץ "חשב תיקון כוונת"`;
       }
 
       draw();
@@ -666,7 +702,7 @@
         return;
       }
       if (!state.pixelsPerCm) {
-        alert('לא זוהתה קובייה אוטומטית ולא בוצעה מדידה ידנית. לחץ "מדידת 1 ס"מ (סרגל)" כדי לדייק.');
+        alert('יש למדוד 1 ס"מ על הדף (סרגל) לפני החישוב.');
         return;
       }
 
@@ -706,8 +742,13 @@
       const groupSizeCm = maxDistPx ? pxToCm(maxDistPx) : 0;
       const groupSizeSquares = groupSizeCm ? cmToSquares(groupSizeCm) : 0;
 
+      const radialErrorCm = Math.sqrt(dxCm * dxCm + dyCm * dyCm);
+      const status = classifyZeroing(groupSizeCm, radialErrorCm);
+
       state.result = {
         dxCm, dyCm,
+        radialErrorCm,
+        status,
         elevClicks, windClicks,
         correctionHorizDir, correctionVertDir,
         groupSizeCm, groupSizeSquares
@@ -717,10 +758,22 @@
         ? ` | גודל מקבץ ≈ ${groupSizeCm.toFixed(1)} ס"מ (${groupSizeSquares.toFixed(1)} קוביות)`
         : '';
 
-      state.overlayMsg = 'חישוב הושלם. אפשר ליצור תעודה או לתקן סימונים.';
-      el.resultText.textContent =
-        `תיקון: צידוד ${windClicks} קליקים ${correctionHorizDir} | ` +
-        `גובה ${elevClicks} קליקים ${correctionVertDir}` + groupText;
+            
+      // הצגת סטטוס בצבעים ובשורות נפרדות
+      let statusClass =
+        status.code === 'EXCELLENT' ? 'status-excellent' :
+        status.code === 'ADJUST_ONLY' ? 'status-adjust' :
+        'status-repeat';
+
+      let statusHtml = `<div class="${statusClass}">${status.text}</div>`;
+
+      if (status.code !== 'EXCELLENT') {
+        statusHtml += `<div class="status-sub">נדרש תיקון: צידוד ${windClicks} קליקים ${correctionHorizDir} , גובה ${elevClicks} קליקים ${correctionVertDir}</div>`;
+      }
+
+      el.resultText.innerHTML =
+        statusHtml +
+        `<div class="status-sub">מקבץ: ${groupSizeCm.toFixed(2)} ס״מ</div>`;
     });
 
     // ===== תעודת איפוס =====
@@ -773,19 +826,32 @@
           );
         }
 
-        // ✅ תנאי "הנשק אופס בהצלחה"
-        if (groupSizeCm) {
-          const radialErrorCm = Math.sqrt(dxCm * dxCm + dyCm * dyCm);
-          if (groupSizeCm < 5 && Math.abs(radialErrorCm) < 2) {
-            ctx2.fillStyle = '#22c55e';
-            ctx2.fillText(
-              'הנשק אופס בהצלחה (מקבץ < 5 ס"מ וסטייה < 2 ס"מ מנקודת המכוון)',
-              60, 300
-            );
-            ctx2.fillStyle = '#e5e7eb';
-          }
+        // ✅ סטטוס איפוס לפי כללי סיווג
+        const radialErrorCm = Math.sqrt(dxCm * dxCm + dyCm * dyCm);
+        const status = classifyZeroing(groupSizeCm || 999, radialErrorCm || 999);
+
+        ctx2.fillStyle = (status.code === 'EXCELLENT') ? '#22c55e' :
+                         (status.code === 'ADJUST_ONLY') ? '#f59e0b' : '#ef4444';
+        
+        let statusColor =
+          status.code === 'EXCELLENT' ? '#22c55e' :
+          status.code === 'ADJUST_ONLY' ? '#38bdf8' :
+          '#ef4444';
+
+        ctx2.fillStyle = statusColor;
+        ctx2.font = 'bold 22px system-ui';
+        ctx2.fillText(status.text, 60, 300);
+
+        if (status.code !== 'EXCELLENT') {
+          ctx2.fillStyle = '#e5e7eb';
+          ctx2.font = 'bold 16px system-ui';
+          ctx2.fillText(`נדרש תיקון: צידוד ${windClicks} קליקים ${correctionHorizDir} , גובה ${elevClicks} קליקים ${correctionVertDir}`, 60, 330);
         }
-      }
+
+        ctx2.fillStyle = '#e5e7eb';
+    
+        ctx2.fillStyle = '#e5e7eb';
+      }}
 
       // צילום דף איפוס ממוזער
       if (el.canvas.width && el.canvas.height) {
@@ -824,70 +890,180 @@
     });
 
     
+    async function runAutoGridWithTimeout(img, ms) {
+      return await Promise.race([
+        new Promise((resolve) => {
+          setTimeout(() => {
+            try {
+              const g = detectGridPxFromImage(img);
+              resolve(g);
+            } catch (e) {
+              resolve(null);
+            }
+          }, 0);
+        }),
+        new Promise((resolve) => setTimeout(() => resolve({ timeout: true }), ms))
+      ]);
+    }
 
-    // ===== זיהוי קובייה אוטומטי (רשת) =====
-    // מחזיר פיקסלים ל-1 קובייה (שהיא gridSizeCm ס"מ) על הקנבס.
     function detectGridPxFromImage(img) {
+      // Robust grid period estimation (px per square) using projection + autocorrelation.
+      // Tries multiple ROIs and picks the best score.
       try {
-        // דוגמים גרסה מוקטנת
-        const maxW = 900;
+        const maxW = 1100;
         const s = Math.min(maxW / img.width, 1);
-        const w = Math.max(320, Math.round(img.width * s));
+        const w = Math.max(360, Math.round(img.width * s));
         const h = Math.round(img.height * s);
 
         const off = document.createElement('canvas');
         off.width = w; off.height = h;
         const ox = off.getContext('2d', { willReadFrequently: true });
         ox.drawImage(img, 0, 0, w, h);
+
         const data = ox.getImageData(0, 0, w, h).data;
-
-        // ROI: אזור ימין-אמצע (בדרך כלל נקי מהטבעת ומהטבלה התחתונה)
-        const rx0 = Math.floor(w * 0.60), rx1 = Math.floor(w * 0.94);
-        const ry0 = Math.floor(h * 0.20), ry1 = Math.floor(h * 0.62);
-
         const gray = new Uint8Array(w * h);
         for (let i = 0, p = 0; i < w * h; i++, p += 4) {
           gray[i] = (data[p] * 0.299 + data[p + 1] * 0.587 + data[p + 2] * 0.114) | 0;
         }
         const idx = (x, y) => y * w + x;
 
-        const projX = new Float64Array(rx1 - rx0);
-        const projY = new Float64Array(ry1 - ry0);
+        // ROIs: right-mid, left-mid, center-mid, top-mid (avoid bottom tables)
+        const rois = [
+          { x0: 0.62, x1: 0.95, y0: 0.18, y1: 0.62 },
+          { x0: 0.05, x1: 0.38, y0: 0.18, y1: 0.62 },
+          { x0: 0.35, x1: 0.65, y0: 0.18, y1: 0.62 },
+          { x0: 0.20, x1: 0.80, y0: 0.05, y1: 0.35 },
+        ];
 
-        for (let y = ry0 + 1; y < ry1 - 1; y++) {
-          for (let x = rx0 + 1; x < rx1 - 1; x++) {
-            const gx =
-              -gray[idx(x - 1, y - 1)] + gray[idx(x + 1, y - 1)] +
-              -2 * gray[idx(x - 1, y)] + 2 * gray[idx(x + 1, y)] +
-              -gray[idx(x - 1, y + 1)] + gray[idx(x + 1, y + 1)];
-            const gy =
-              -gray[idx(x - 1, y - 1)] - 2 * gray[idx(x, y - 1)] - gray[idx(x + 1, y - 1)] +
-              gray[idx(x - 1, y + 1)] + 2 * gray[idx(x, y + 1)] + gray[idx(x + 1, y + 1)];
-            const mag = Math.abs(gx) + Math.abs(gy);
-            projX[x - rx0] += mag;
-            projY[y - ry0] += mag;
+        let best = null;
+
+        for (const r of rois) {
+          const rx0 = Math.floor(w * r.x0), rx1 = Math.floor(w * r.x1);
+          const ry0 = Math.floor(h * r.y0), ry1 = Math.floor(h * r.y1);
+
+          const projX = new Float64Array(rx1 - rx0);
+          const projY = new Float64Array(ry1 - ry0);
+
+          // Edge magnitude (Sobel-ish) to emphasize grid lines
+          for (let y = ry0 + 1; y < ry1 - 1; y++) {
+            for (let x = rx0 + 1; x < rx1 - 1; x++) {
+              const gx =
+                -gray[idx(x - 1, y - 1)] + gray[idx(x + 1, y - 1)] +
+                -2 * gray[idx(x - 1, y)] + 2 * gray[idx(x + 1, y)] +
+                -gray[idx(x - 1, y + 1)] + gray[idx(x + 1, y + 1)];
+              const gy =
+                -gray[idx(x - 1, y - 1)] - 2 * gray[idx(x, y - 1)] - gray[idx(x + 1, y - 1)] +
+                gray[idx(x - 1, y + 1)] + 2 * gray[idx(x, y + 1)] + gray[idx(x + 1, y + 1)];
+              const mag = Math.abs(gx) + Math.abs(gy);
+              projX[x - rx0] += mag;
+              projY[y - ry0] += mag;
+            }
+          }
+
+          const resX = estimatePeriodAutocorr(projX);
+          const resY = estimatePeriodAutocorr(projY);
+
+          if (!resX || !resY) continue;
+
+          const pxX = resX.period;
+          const pxY = resY.period;
+          const px = (pxX + pxY) / 2;
+
+          // scoring: strong peaks + x/y agreement
+          const agree = 1 - Math.min(1, Math.abs(pxX - pxY) / Math.max(px, 1));
+          const score = (resX.score + resY.score) * 0.5 * (0.4 + 0.6 * agree);
+
+          if (!best || score > best.score) {
+            best = { px, pxX, pxY, score, roi: r };
           }
         }
 
-        const pxX = estimatePeriodFromPeaks(projX);
-        const pxY = estimatePeriodFromPeaks(projY);
-        if (!pxX || !pxY) return null;
+        if (!best) return null;
 
-        const px = (pxX + pxY) / 2;
-        if (!isFinite(px) || px < 8 || px > 220) return null;
+        if (!isFinite(best.px) || best.px < 8 || best.px > 260) return null;
 
-        // המרה לפיקסלים על הקנבס
-        const s2 = el.canvas.width / img.width; // original -> canvas
-        const pxOnCanvas = px * (s2 / s);
+        // Convert from off-canvas px to displayed canvas px
+        const s2 = el.canvas.width / img.width; // original->canvas
+        const pxOnCanvas = best.px * (s2 / s);
+        const pxXOnCanvas = best.pxX * (s2 / s);
+        const pxYOnCanvas = best.pxY * (s2 / s);
 
-        return { px: pxOnCanvas, pxX: pxX * (s2 / s), pxY: pxY * (s2 / s) };
+        // Minimal confidence check: x/y should not be wildly different
+        const diffRatio = Math.abs(pxXOnCanvas - pxYOnCanvas) / Math.max(pxOnCanvas, 1);
+        if (diffRatio > 0.22) {
+          // still return but mark as low confidence via caller
+          return { px: pxOnCanvas, pxX: pxXOnCanvas, pxY: pxYOnCanvas, lowConfidence: true };
+        }
+
+        return { px: pxOnCanvas, pxX: pxXOnCanvas, pxY: pxYOnCanvas };
       } catch (e) {
         console.warn('Grid detect failed', e);
         return null;
       }
     }
 
-    function estimatePeriodFromPeaks(signal) {
+    function estimatePeriodAutocorr(signal) {
+      // Returns {period, score} where score is peak prominence.
+      const n = signal.length;
+      if (n < 120) return null;
+
+      // detrend
+      let mean = 0;
+      for (let i = 0; i < n; i++) mean += signal[i];
+      mean /= n;
+
+      const s = new Float64Array(n);
+      for (let i = 0; i < n; i++) s[i] = Math.max(0, signal[i] - mean);
+
+      // smooth
+      const win = 11;
+      const sm = new Float64Array(n);
+      let acc = 0;
+      for (let i = 0; i < n; i++) {
+        acc += s[i];
+        if (i >= win) acc -= s[i - win];
+        sm[i] = acc / Math.min(i + 1, win);
+      }
+
+      // autocorrelation for lags in plausible range
+      const minLag = 10;
+      const maxLag = Math.min(260, Math.floor(n / 2));
+      if (maxLag <= minLag + 5) return null;
+
+      // normalize energy
+      let energy = 0;
+      for (let i = 0; i < n; i++) energy += sm[i] * sm[i];
+      if (energy <= 1e-9) return null;
+
+      let bestLag = null;
+      let bestVal = -1;
+
+      // compute correlation at each lag (O(n*L) but OK for these sizes)
+      for (let lag = minLag; lag <= maxLag; lag++) {
+        let c = 0;
+        for (let i = 0; i < n - lag; i++) c += sm[i] * sm[i + lag];
+        const val = c / energy;
+        if (val > bestVal) { bestVal = val; bestLag = lag; }
+      }
+
+      if (!bestLag) return null;
+
+      // peak prominence: compare to neighborhood median
+      const vals = [];
+      for (let lag = Math.max(minLag, bestLag - 12); lag <= Math.min(maxLag, bestLag + 12); lag++) {
+        let c = 0;
+        for (let i = 0; i < n - lag; i++) c += sm[i] * sm[i + lag];
+        vals.push(c / energy);
+      }
+      vals.sort((a,b)=>a-b);
+      const med = vals[Math.floor(vals.length/2)] || 0;
+      const score = Math.max(0, bestVal - med);
+
+      // require some minimal prominence
+      if (bestVal < 0.08 || score < 0.015) return null;
+
+      return { period: bestLag, score };
+    }(signal) {
       const n = signal.length;
       if (n < 80) return null;
 
@@ -898,7 +1074,6 @@
       const s = new Float64Array(n);
       for (let i = 0; i < n; i++) s[i] = Math.max(0, signal[i] - mean);
 
-      // smoothing
       const win = 9;
       const sm = new Float64Array(n);
       let acc = 0;
@@ -940,7 +1115,7 @@
       return med;
     }
 
-    // אתחול
+// אתחול
     applyRatiosFromInputs();
     setMode('desired');
     loadWeaponRatios();
